@@ -8,3 +8,5 @@ venv/
 exports/
 .pytest_cache/
 *.pqh
+frontend/node_modules/
+.server_port

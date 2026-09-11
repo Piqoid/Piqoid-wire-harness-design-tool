@@ -68,6 +68,42 @@ def fmt_cmd(project_path):
         click.echo("All files already in canonical form.")
 
 
+@cli.command("serve")
+@click.argument("project_path", default=".", type=click.Path(exists=True))
+@click.option("--port", default=0, type=int, help="Port (0 = auto-select)")
+@click.option("--host", default="127.0.0.1")
+def serve_cmd(project_path, port, host):
+    """Start the harness tool web server."""
+    import os
+    os.environ["HARNESS_PROJECT_ROOT"] = str(Path(project_path).resolve())
+    from .server.run import serve
+    from click.testing import CliRunner
+    # Invoke directly via the run module
+    import uvicorn
+    import socket
+
+    root = Path(project_path).resolve()
+    os.environ["HARNESS_PROJECT_ROOT"] = str(root)
+    if port == 0:
+        with socket.socket() as s:
+            s.bind(("127.0.0.1", 0))
+            port = s.getsockname()[1]
+    (root / ".server_port").write_text(str(port))
+    click.echo(f"Harness Tool server → http://{host}:{port}")
+    try:
+        uvicorn.run(
+            "app.server._factory:make",
+            factory=True,
+            host=host,
+            port=port,
+            log_level="info",
+        )
+    finally:
+        p = root / ".server_port"
+        if p.exists():
+            p.unlink()
+
+
 @cli.command("schema")
 @click.option("--output", "-o", default=None, type=click.Path(), help="Output file (default: stdout)")
 def schema_cmd(output):

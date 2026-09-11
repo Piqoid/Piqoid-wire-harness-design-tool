@@ -1,17 +1,41 @@
 # Wiring Harness Design Tool — User Documentation
 
-**Current milestone: M0 — Schema and headless core**
+**Current milestone: M1 — Server + read-only UI**
 **Schema version: 1**
 
 ---
 
 ## What is this?
 
-A rule-checked wiring harness database for Piqoid's SCARA robot harnesses. Projects are plain JSON files. A validation engine enforces electrical intent: voltage compatibility, protocol matching, current budgets, and connectivity. This document covers the M0 headless core (no UI, no server).
+A rule-checked wiring harness database for Piqoid's SCARA robot harnesses. Projects are plain JSON files. A validation engine enforces electrical intent: voltage compatibility, protocol matching, current budgets, and connectivity. M1 adds a FastAPI server and a React/Vite UI for browsing and reviewing harness data.
 
 ---
 
 ## Quick start
+
+### Run the UI (production)
+
+```bash
+# From the project root (contains project.json)
+python -m uvicorn "app.server._factory:make" --factory --host 127.0.0.1 --port 8765
+# Open http://127.0.0.1:8765 in a browser
+```
+
+The built React app is served directly from `app/static/`. No separate web server needed.
+
+### Run the UI (development — hot reload)
+
+```bash
+# Terminal 1: backend
+python -m uvicorn "app.server._factory:make" --factory --host 127.0.0.1 --port 8765 --reload
+
+# Terminal 2: frontend dev server (proxies /api and /ws to backend)
+cd frontend
+npm run dev
+# Open http://localhost:5173
+```
+
+### CLI commands
 
 ```bash
 # Validate a project (prints text summary to stdout)
@@ -31,6 +55,57 @@ python -m app.cli schema -o schema.json
 ```
 
 **Exit codes:** 0 = no unwaived errors. 1 = errors present (or project load failure).
+
+### Rebuild the frontend
+
+```bash
+cd frontend
+npm run build   # outputs to app/static/
+```
+
+---
+
+## UI reference (M1)
+
+The app loads at the project root URL. The header shows the project name and a harness selector when multiple harnesses are present. Badge counts for active errors and warnings are shown in the header.
+
+### Sidebar views
+
+| View | Description |
+|---|---|
+| **Graph** | Network diagram: device nodes, splice junction dots, segment edges coloured by net. Hover any edge to highlight that net across all edges. Pan and zoom freely. Positions come from `harness/<name>/layout.json`. |
+| **Nets** | Table of all nets. Columns: name (with colour dot), class, port count, bus ref, signal profile, tags. Click a row to highlight that net in all other views. |
+| **Wires** | Table of all segments. Columns: label, net (with colour dot), gauge, wire colour swatch, length + source, bundle assignment, tags. Diagnostic count shown per row. |
+| **Bundles** | Tree of bundles (supports parent → child nesting). Each row shows fill %, outer diameter, conductor count, sheath type, and shield status. Expand/collapse sub-bundles. Segment chips list the wires inside. |
+
+### Validation panel
+
+A collapsible panel at the bottom of every view. Diagnostics are grouped by severity (errors first, then warnings, then info). Click any diagnostic row to highlight the referenced entities in the active view. A second click clears the highlight. Toggle "show waived" to see suppressed diagnostics.
+
+### Highlighting
+
+Clicking a net, wire, bundle, or diagnostic row dims all unrelated items (opacity 0.35). Click the same row again or press "× clear" in the validation panel header to restore full visibility. Highlighting is cross-view: if you highlight a net in the Nets table and switch to Wires, the dimming follows.
+
+### Multiple harnesses
+
+If the project contains more than one harness folder under `harness/`, a dropdown appears in the header. Switching harnesses reloads all data and opens a new WebSocket validation stream. The broken test harness (`scara_broken`) can be selected to see live error reporting.
+
+---
+
+---
+
+## REST API (M1)
+
+All endpoints are under `/api`. The UI uses these; you can call them from scripts too.
+
+| Method | Path | Returns |
+|---|---|---|
+| GET | `/api/project` | Project meta + list of harness names |
+| GET | `/api/harness/{name}` | All entity collections for the named harness |
+| GET | `/api/layout/{name}` | UI node positions (or empty if no layout.json) |
+| GET | `/api/profiles` | All signal profiles from `library/profiles/` |
+| GET | `/api/validate/{name}` | Run validation and return diagnostics |
+| WS | `/ws/validate/{name}` | Live validation stream; sends diagnostics on connect, accepts `"refresh"` message, pings every 30 s |
 
 ---
 
