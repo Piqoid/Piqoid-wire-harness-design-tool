@@ -1,0 +1,402 @@
+[
+  {
+    "id": "seg_pwr_psu_to_splice",
+    "type": "segment",
+    "schema_version": 1,
+    "net_ref": "net_24v_main",
+    "from": {"kind": "port", "ref": "np_psu_24v_out"},
+    "to": {"kind": "splice", "ref": "spl_pwr_main"},
+    "conductor": {
+      "gauge": {"awg": 16, "mm2": 1.5},
+      "construction": "stranded",
+      "stranding": "7/24",
+      "material": "Cu",
+      "plating": "tin",
+      "insulation": {"material": "PVC", "rating_v": 300, "temp_rating_c": 105, "od_mm": 2.8},
+      "color": "RD"
+    },
+    "length_mm": 400,
+    "length_source": "measured",
+    "bundle_refs": ["bnd_cabinet"],
+    "label": "W-001",
+    "tags": {"placement": "internal", "zone": "cabinet"}
+  },
+  {
+    "id": "seg_pwr_splice_to_mcu",
+    "type": "segment",
+    "schema_version": 1,
+    "net_ref": "net_24v_main",
+    "from": {"kind": "splice", "ref": "spl_pwr_main"},
+    "to": {"kind": "port", "ref": "np_mcu_pwr_in"},
+    "conductor": {
+      "gauge": {"awg": 20, "mm2": 0.5},
+      "construction": "stranded",
+      "material": "Cu",
+      "insulation": {"material": "PVC", "rating_v": 300, "temp_rating_c": 105, "od_mm": 2.0},
+      "color": "RD"
+    },
+    "length_mm": 150,
+    "length_source": "measured",
+    "bundle_refs": ["bnd_cabinet"],
+    "label": "W-002",
+    "tags": {"placement": "internal", "zone": "cabinet"}
+  },
+  {
+    "id": "seg_pwr_splice_to_xcvr",
+    "type": "segment",
+    "schema_version": 1,
+    "net_ref": "net_24v_main",
+    "from": {"kind": "splice", "ref": "spl_pwr_main"},
+    "to": {"kind": "port", "ref": "np_xcvr_vcc"},
+    "conductor": {
+      "gauge": {"awg": 22, "mm2": 0.34},
+      "construction": "stranded",
+      "material": "Cu",
+      "insulation": {"material": "PVC", "rating_v": 300, "temp_rating_c": 105, "od_mm": 1.6},
+      "color": "RD"
+    },
+    "length_mm": 80,
+    "length_source": "measured",
+    "bundle_refs": ["bnd_cabinet"],
+    "label": "W-003",
+    "tags": {"placement": "internal", "zone": "cabinet"}
+  },
+  {
+    "id": "seg_pwr_splice_to_j1",
+    "type": "segment",
+    "schema_version": 1,
+    "net_ref": "net_24v_main",
+    "from": {"kind": "splice", "ref": "spl_pwr_main"},
+    "to": {"kind": "port", "ref": "np_j1_pwr_in"},
+    "conductor": {
+      "gauge": {"awg": 18, "mm2": 0.75},
+      "construction": "stranded",
+      "material": "Cu",
+      "insulation": {"material": "PVC", "rating_v": 300, "temp_rating_c": 105, "od_mm": 2.4},
+      "color": "RD"
+    },
+    "length_mm": 850,
+    "length_source": "measured",
+    "bundle_refs": ["bnd_base_to_j1"],
+    "label": "W-004",
+    "tags": {"placement": "internal", "zone": "j1_arm"}
+  },
+  {
+    "id": "seg_pwr_splice_to_j2",
+    "type": "segment",
+    "schema_version": 1,
+    "net_ref": "net_24v_main",
+    "from": {"kind": "splice", "ref": "spl_pwr_main"},
+    "to": {"kind": "port", "ref": "np_j2_pwr_in"},
+    "conductor": {
+      "gauge": {"awg": 18, "mm2": 0.75},
+      "construction": "stranded",
+      "material": "Cu",
+      "insulation": {"material": "PVC", "rating_v": 300, "temp_rating_c": 105, "od_mm": 2.4},
+      "color": "RD"
+    },
+    "length_mm": 1400,
+    "length_source": "measured",
+    "bundle_refs": ["bnd_base_to_j2"],
+    "label": "W-005",
+    "tags": {"placement": "internal", "zone": "j2_arm"}
+  },
+  {
+    "id": "seg_gnd_psu_to_splice",
+    "type": "segment",
+    "schema_version": 1,
+    "net_ref": "net_gnd_chassis",
+    "from": {"kind": "port", "ref": "np_psu_gnd"},
+    "to": {"kind": "splice", "ref": "spl_gnd_main"},
+    "conductor": {
+      "gauge": {"awg": 16, "mm2": 1.5},
+      "construction": "stranded",
+      "material": "Cu",
+      "insulation": {"material": "PVC", "rating_v": 300, "temp_rating_c": 105, "od_mm": 2.8},
+      "color": "BK"
+    },
+    "length_mm": 400,
+    "length_source": "measured",
+    "bundle_refs": ["bnd_cabinet"],
+    "label": "W-010",
+    "tags": {"placement": "internal", "zone": "cabinet"}
+  },
+  {
+    "id": "seg_gnd_splice_to_mcu",
+    "type": "segment",
+    "schema_version": 1,
+    "net_ref": "net_gnd_chassis",
+    "from": {"kind": "splice", "ref": "spl_gnd_main"},
+    "to": {"kind": "port", "ref": "np_mcu_gnd"},
+    "conductor": {
+      "gauge": {"awg": 22, "mm2": 0.34},
+      "construction": "stranded",
+      "material": "Cu",
+      "insulation": {"material": "PVC", "rating_v": 300, "temp_rating_c": 105, "od_mm": 1.6},
+      "color": "BK"
+    },
+    "length_mm": 150,
+    "length_source": "measured",
+    "bundle_refs": ["bnd_cabinet"],
+    "label": "W-011",
+    "tags": {"placement": "internal", "zone": "cabinet"}
+  },
+  {
+    "id": "seg_gnd_splice_to_xcvr",
+    "type": "segment",
+    "schema_version": 1,
+    "net_ref": "net_gnd_chassis",
+    "from": {"kind": "splice", "ref": "spl_gnd_main"},
+    "to": {"kind": "port", "ref": "np_xcvr_gnd"},
+    "conductor": {
+      "gauge": {"awg": 22, "mm2": 0.34},
+      "construction": "stranded",
+      "material": "Cu",
+      "insulation": {"material": "PVC", "rating_v": 300, "temp_rating_c": 105, "od_mm": 1.6},
+      "color": "BK"
+    },
+    "length_mm": 80,
+    "length_source": "measured",
+    "bundle_refs": ["bnd_cabinet"],
+    "label": "W-012",
+    "tags": {"placement": "internal", "zone": "cabinet"}
+  },
+  {
+    "id": "seg_gnd_splice_to_j1",
+    "type": "segment",
+    "schema_version": 1,
+    "net_ref": "net_gnd_chassis",
+    "from": {"kind": "splice", "ref": "spl_gnd_main"},
+    "to": {"kind": "port", "ref": "np_j1_gnd"},
+    "conductor": {
+      "gauge": {"awg": 20, "mm2": 0.5},
+      "construction": "stranded",
+      "material": "Cu",
+      "insulation": {"material": "PVC", "rating_v": 300, "temp_rating_c": 105, "od_mm": 2.0},
+      "color": "BK"
+    },
+    "length_mm": 850,
+    "length_source": "measured",
+    "bundle_refs": ["bnd_base_to_j1"],
+    "label": "W-013",
+    "tags": {"placement": "internal", "zone": "j1_arm"}
+  },
+  {
+    "id": "seg_gnd_splice_to_j2",
+    "type": "segment",
+    "schema_version": 1,
+    "net_ref": "net_gnd_chassis",
+    "from": {"kind": "splice", "ref": "spl_gnd_main"},
+    "to": {"kind": "port", "ref": "np_j2_gnd"},
+    "conductor": {
+      "gauge": {"awg": 20, "mm2": 0.5},
+      "construction": "stranded",
+      "material": "Cu",
+      "insulation": {"material": "PVC", "rating_v": 300, "temp_rating_c": 105, "od_mm": 2.0},
+      "color": "BK"
+    },
+    "length_mm": 1400,
+    "length_source": "measured",
+    "bundle_refs": ["bnd_base_to_j2"],
+    "label": "W-014",
+    "tags": {"placement": "internal", "zone": "j2_arm"}
+  },
+  {
+    "id": "seg_can0_tx",
+    "type": "segment",
+    "schema_version": 1,
+    "net_ref": "net_can0_tx",
+    "from": {"kind": "port", "ref": "np_mcu_can0_tx"},
+    "to": {"kind": "port", "ref": "np_xcvr_tx"},
+    "conductor": {
+      "gauge": {"awg": 24, "mm2": 0.2},
+      "construction": "stranded",
+      "material": "Cu",
+      "insulation": {"material": "PVC", "rating_v": 300, "temp_rating_c": 105, "od_mm": 1.3},
+      "color": "YL"
+    },
+    "length_mm": 60,
+    "length_source": "measured",
+    "bundle_refs": ["bnd_cabinet"],
+    "label": "W-020",
+    "tags": {"placement": "internal", "zone": "cabinet"}
+  },
+  {
+    "id": "seg_can0_rx",
+    "type": "segment",
+    "schema_version": 1,
+    "net_ref": "net_can0_rx",
+    "from": {"kind": "port", "ref": "np_xcvr_rx"},
+    "to": {"kind": "port", "ref": "np_mcu_can0_rx"},
+    "conductor": {
+      "gauge": {"awg": 24, "mm2": 0.2},
+      "construction": "stranded",
+      "material": "Cu",
+      "insulation": {"material": "PVC", "rating_v": 300, "temp_rating_c": 105, "od_mm": 1.3},
+      "color": "GN"
+    },
+    "length_mm": 60,
+    "length_source": "measured",
+    "bundle_refs": ["bnd_cabinet"],
+    "label": "W-021",
+    "tags": {"placement": "internal", "zone": "cabinet"}
+  },
+  {
+    "id": "seg_can0_h_xcvr_to_j1",
+    "type": "segment",
+    "schema_version": 1,
+    "net_ref": "net_can0_h",
+    "from": {"kind": "port", "ref": "np_xcvr_canh"},
+    "to": {"kind": "port", "ref": "np_j1_canh"},
+    "conductor": {
+      "gauge": {"awg": 22, "mm2": 0.34},
+      "construction": "stranded",
+      "stranding": "7/30",
+      "material": "Cu",
+      "plating": "tin",
+      "insulation": {"material": "PVC", "rating_v": 300, "temp_rating_c": 105, "od_mm": 1.6},
+      "color": "WH",
+      "stripe": "BU"
+    },
+    "length_mm": 850,
+    "length_source": "measured",
+    "cable_ref": "cbl_can0_trunk",
+    "cable_core": 1,
+    "bundle_refs": ["bnd_base_to_j1"],
+    "label": "W-030",
+    "tags": {"placement": "internal", "zone": "j1_arm"}
+  },
+  {
+    "id": "seg_can0_h_j1_to_j2",
+    "type": "segment",
+    "schema_version": 1,
+    "net_ref": "net_can0_h",
+    "from": {"kind": "port", "ref": "np_j1_canh"},
+    "to": {"kind": "port", "ref": "np_j2_canh"},
+    "conductor": {
+      "gauge": {"awg": 22, "mm2": 0.34},
+      "construction": "stranded",
+      "stranding": "7/30",
+      "material": "Cu",
+      "plating": "tin",
+      "insulation": {"material": "PVC", "rating_v": 300, "temp_rating_c": 105, "od_mm": 1.6},
+      "color": "WH",
+      "stripe": "BU"
+    },
+    "length_mm": 550,
+    "length_source": "measured",
+    "cable_ref": "cbl_can0_trunk",
+    "cable_core": 1,
+    "bundle_refs": ["bnd_base_to_j2"],
+    "label": "W-031",
+    "tags": {"placement": "internal", "zone": "j2_arm"}
+  },
+  {
+    "id": "seg_can0_l_xcvr_to_j1",
+    "type": "segment",
+    "schema_version": 1,
+    "net_ref": "net_can0_l",
+    "from": {"kind": "port", "ref": "np_xcvr_canl"},
+    "to": {"kind": "port", "ref": "np_j1_canl"},
+    "conductor": {
+      "gauge": {"awg": 22, "mm2": 0.34},
+      "construction": "stranded",
+      "stranding": "7/30",
+      "material": "Cu",
+      "plating": "tin",
+      "insulation": {"material": "PVC", "rating_v": 300, "temp_rating_c": 105, "od_mm": 1.6},
+      "color": "BU"
+    },
+    "length_mm": 850,
+    "length_source": "measured",
+    "cable_ref": "cbl_can0_trunk",
+    "cable_core": 2,
+    "bundle_refs": ["bnd_base_to_j1"],
+    "label": "W-032",
+    "tags": {"placement": "internal", "zone": "j1_arm"}
+  },
+  {
+    "id": "seg_can0_l_j1_to_j2",
+    "type": "segment",
+    "schema_version": 1,
+    "net_ref": "net_can0_l",
+    "from": {"kind": "port", "ref": "np_j1_canl"},
+    "to": {"kind": "port", "ref": "np_j2_canl"},
+    "conductor": {
+      "gauge": {"awg": 22, "mm2": 0.34},
+      "construction": "stranded",
+      "stranding": "7/30",
+      "material": "Cu",
+      "plating": "tin",
+      "insulation": {"material": "PVC", "rating_v": 300, "temp_rating_c": 105, "od_mm": 1.6},
+      "color": "BU"
+    },
+    "length_mm": 550,
+    "length_source": "measured",
+    "cable_ref": "cbl_can0_trunk",
+    "cable_core": 2,
+    "bundle_refs": ["bnd_base_to_j2"],
+    "label": "W-033",
+    "tags": {"placement": "internal", "zone": "j2_arm"}
+  },
+  {
+    "id": "seg_enable_mcu_to_splice",
+    "type": "segment",
+    "schema_version": 1,
+    "net_ref": "net_enable",
+    "from": {"kind": "port", "ref": "np_mcu_enable_out"},
+    "to": {"kind": "splice", "ref": "spl_enable"},
+    "conductor": {
+      "gauge": {"awg": 24, "mm2": 0.2},
+      "construction": "stranded",
+      "material": "Cu",
+      "insulation": {"material": "PVC", "rating_v": 300, "temp_rating_c": 105, "od_mm": 1.3},
+      "color": "VT"
+    },
+    "length_mm": 80,
+    "length_source": "measured",
+    "bundle_refs": ["bnd_cabinet"],
+    "label": "W-040",
+    "tags": {"placement": "internal", "zone": "cabinet"}
+  },
+  {
+    "id": "seg_enable_splice_to_j1",
+    "type": "segment",
+    "schema_version": 1,
+    "net_ref": "net_enable",
+    "from": {"kind": "splice", "ref": "spl_enable"},
+    "to": {"kind": "port", "ref": "np_j1_enable"},
+    "conductor": {
+      "gauge": {"awg": 24, "mm2": 0.2},
+      "construction": "stranded",
+      "material": "Cu",
+      "insulation": {"material": "PVC", "rating_v": 300, "temp_rating_c": 105, "od_mm": 1.3},
+      "color": "VT"
+    },
+    "length_mm": 850,
+    "length_source": "measured",
+    "bundle_refs": ["bnd_base_to_j1"],
+    "label": "W-041",
+    "tags": {"placement": "internal", "zone": "j1_arm"}
+  },
+  {
+    "id": "seg_enable_splice_to_j2",
+    "type": "segment",
+    "schema_version": 1,
+    "net_ref": "net_enable",
+    "from": {"kind": "splice", "ref": "spl_enable"},
+    "to": {"kind": "port", "ref": "np_j2_enable"},
+    "conductor": {
+      "gauge": {"awg": 24, "mm2": 0.2},
+      "construction": "stranded",
+      "material": "Cu",
+      "insulation": {"material": "PVC", "rating_v": 300, "temp_rating_c": 105, "od_mm": 1.3},
+      "color": "VT"
+    },
+    "length_mm": 1400,
+    "length_source": "measured",
+    "bundle_refs": ["bnd_base_to_j2"],
+    "label": "W-042",
+    "tags": {"placement": "internal", "zone": "j2_arm"}
+  }
+]

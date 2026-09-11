@@ -1,0 +1,29 @@
+[
+  {
+    "id": "cbl_can0_trunk",
+    "type": "cable",
+    "schema_version": 1,
+    "part_ref": "cablepart_lapp_unitronic_2x034_tp",
+    "part_version_hash": "cblabc001",
+    "designator": "C1",
+    "length_mm": 1450,
+    "cores": [
+      {"index": 1, "color": "WH/BU", "awg": 22, "mm2": 0.34, "segment_ref": null},
+      {"index": 2, "color": "BU",    "awg": 22, "mm2": 0.34, "segment_ref": null}
+    ],
+    "twisted_pairs": [[1, 2]],
+    "shield": {
+      "type": "braid",
+      "coverage_pct": 85,
+      "drain_net_ref": "net_gnd_chassis",
+      "termination": "source_end_only"
+    },
+    "jacket": {
+      "material": "PVC",
+      "od_mm": 5.2,
+      "temp_c": 80,
+      "drag_chain_rated": false
+    },
+    "tags": {"placement": "internal"}
+  }
+]

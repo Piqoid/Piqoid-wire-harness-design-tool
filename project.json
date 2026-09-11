@@ -1,0 +1,64 @@
+{
+  "id": "proj_PIQOBOT_S400",
+  "type": "project",
+  "schema_version": 1,
+  "name": "PiqoBot S400 SCARA Harness",
+  "description": "Main harness for PiqoBot S400 4-axis SCARA robot. Covers cabinet-to-arm power distribution and CAN drive bus.",
+  "created": "2026-09-11",
+  "units": {
+    "area": "mm2",
+    "current": "A",
+    "length": "mm",
+    "voltage": "V"
+  },
+  "tag_defs": [
+    {
+      "key": "placement",
+      "label": "Placement",
+      "values": ["internal", "external", "boundary"],
+      "applies_to": ["net", "segment", "cable", "bundle", "link", "node"],
+      "multi": false,
+      "required_on": ["segment", "cable"],
+      "inherit": "net_to_segment",
+      "display": {
+        "internal": "#2563eb",
+        "external": "#d97706",
+        "boundary": "#7c3aed"
+      }
+    },
+    {
+      "key": "zone",
+      "label": "Robot zone",
+      "values": ["base", "j1_arm", "j2_arm", "wrist", "eoat", "cabinet"],
+      "applies_to": ["segment", "bundle", "node"],
+      "multi": false,
+      "required_on": [],
+      "inherit": null,
+      "display": {}
+    },
+    {
+      "key": "criticality",
+      "label": "Criticality",
+      "values": ["standard", "safety", "estop"],
+      "applies_to": ["net", "segment"],
+      "multi": false,
+      "required_on": [],
+      "inherit": null,
+      "display": {}
+    }
+  ],
+  "display_rules": [
+    {"match": {"net_class": "ground"}, "color": "#000000", "width_px": 2},
+    {"match": {"net_class": "power"},  "color": "#dc2626", "width_px": 4},
+    {"match": {"tag": {"placement": "external"}}, "style": "dashed"},
+    {"match": {"bus_ref": "bus_can0"}, "color": "#0891b2", "width_px": 3}
+  ],
+  "rule_config": {
+    "ampacity_standard": "IEC_60364_5_52",
+    "inrush_factor": 1.0,
+    "power_headroom_threshold_pct": 80.0,
+    "release_require_measured_lengths": false
+  },
+  "waivers": [],
+  "user_rules": []
+}

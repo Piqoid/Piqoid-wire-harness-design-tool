@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-Content \"c:\\\\Users\\\\sunda\\\\Desktop\\\\Piqoid-wire-harness-design-tool\\\\tool-spec-and-build-instructions.md\" -Raw)"
+    ]
+  }
+}

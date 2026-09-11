@@ -1,0 +1,32 @@
+[
+  {
+    "id": "spl_pwr_main",
+    "type": "splice",
+    "schema_version": 1,
+    "name": "24V Main Power Distribution",
+    "part_ref": "part_splice_butt_18awg",
+    "net_ref": "net_24v_main",
+    "location_note": "Cabinet top rail, P-clip at X=120mm",
+    "tags": {"placement": "internal", "zone": "cabinet"}
+  },
+  {
+    "id": "spl_gnd_main",
+    "type": "splice",
+    "schema_version": 1,
+    "name": "Chassis GND Distribution",
+    "part_ref": "part_splice_butt_18awg",
+    "net_ref": "net_gnd_chassis",
+    "location_note": "Cabinet top rail, adjacent to spl_pwr_main",
+    "tags": {"placement": "internal", "zone": "cabinet"}
+  },
+  {
+    "id": "spl_enable",
+    "type": "splice",
+    "schema_version": 1,
+    "name": "Enable Signal Distribution",
+    "part_ref": "part_splice_butt_22awg",
+    "net_ref": "net_enable",
+    "location_note": "Cabinet signal tray, near MCU",
+    "tags": {"placement": "internal", "zone": "cabinet"}
+  }
+]

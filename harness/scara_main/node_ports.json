@@ -1,0 +1,232 @@
+[
+  {
+    "id": "np_mcu_can0_tx",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_mcu",
+    "interface_ref": "if_can0_logic",
+    "pin_name": "CAN0_TX",
+    "profile_ref": "prof_can_tx_3v3",
+    "net_ref": "net_can0_tx"
+  },
+  {
+    "id": "np_mcu_can0_rx",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_mcu",
+    "interface_ref": "if_can0_logic",
+    "pin_name": "CAN0_RX",
+    "profile_ref": "prof_can_rx_3v3",
+    "net_ref": "net_can0_rx"
+  },
+  {
+    "id": "np_mcu_enable_out",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_mcu",
+    "interface_ref": "if_enable_out",
+    "pin_name": "ENABLE_OUT",
+    "profile_ref": "prof_dig_out_3v3",
+    "net_ref": "net_enable"
+  },
+  {
+    "id": "np_mcu_pwr_in",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_mcu",
+    "interface_ref": "if_pwr_in",
+    "pin_name": "VCC",
+    "profile_ref": "prof_pwr_24v_sink_2a",
+    "net_ref": "net_24v_main"
+  },
+  {
+    "id": "np_mcu_gnd",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_mcu",
+    "interface_ref": "if_gnd",
+    "pin_name": "GND",
+    "profile_ref": "prof_gnd_chassis",
+    "net_ref": "net_gnd_chassis"
+  },
+  {
+    "id": "np_xcvr_tx",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_xcvr",
+    "interface_ref": "if_xcvr_logic",
+    "pin_name": "TXD",
+    "profile_ref": "prof_can_rx_3v3",
+    "net_ref": "net_can0_tx"
+  },
+  {
+    "id": "np_xcvr_rx",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_xcvr",
+    "interface_ref": "if_xcvr_logic",
+    "pin_name": "RXD",
+    "profile_ref": "prof_can_tx_3v3",
+    "net_ref": "net_can0_rx"
+  },
+  {
+    "id": "np_xcvr_canh",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_xcvr",
+    "interface_ref": "if_xcvr_bus",
+    "pin_name": "CANH",
+    "profile_ref": "prof_can_h_5v",
+    "net_ref": "net_can0_h"
+  },
+  {
+    "id": "np_xcvr_canl",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_xcvr",
+    "interface_ref": "if_xcvr_bus",
+    "pin_name": "CANL",
+    "profile_ref": "prof_can_l_5v",
+    "net_ref": "net_can0_l"
+  },
+  {
+    "id": "np_xcvr_vcc",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_xcvr",
+    "interface_ref": "if_xcvr_pwr",
+    "pin_name": "VCC",
+    "profile_ref": "prof_pwr_24v_sink_2a",
+    "net_ref": "net_24v_main"
+  },
+  {
+    "id": "np_xcvr_gnd",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_xcvr",
+    "interface_ref": "if_xcvr_gnd",
+    "pin_name": "GND",
+    "profile_ref": "prof_gnd_chassis",
+    "net_ref": "net_gnd_chassis"
+  },
+  {
+    "id": "np_psu_24v_out",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_psu",
+    "interface_ref": "if_psu_out_pos",
+    "pin_name": "24V+",
+    "profile_ref": "prof_pwr_24v_source",
+    "net_ref": "net_24v_main"
+  },
+  {
+    "id": "np_psu_gnd",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_psu",
+    "interface_ref": "if_psu_gnd",
+    "pin_name": "GND",
+    "profile_ref": "prof_gnd_chassis",
+    "net_ref": "net_gnd_chassis"
+  },
+  {
+    "id": "np_j1_pwr_in",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_j1_drive",
+    "interface_ref": "if_j1_pwr",
+    "pin_name": "24V",
+    "profile_ref": "prof_pwr_24v_sink_4a",
+    "net_ref": "net_24v_main"
+  },
+  {
+    "id": "np_j1_gnd",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_j1_drive",
+    "interface_ref": "if_j1_gnd",
+    "pin_name": "GND",
+    "profile_ref": "prof_gnd_chassis",
+    "net_ref": "net_gnd_chassis"
+  },
+  {
+    "id": "np_j1_canh",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_j1_drive",
+    "interface_ref": "if_j1_can",
+    "pin_name": "CANH",
+    "profile_ref": "prof_can_h_5v",
+    "net_ref": "net_can0_h"
+  },
+  {
+    "id": "np_j1_canl",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_j1_drive",
+    "interface_ref": "if_j1_can",
+    "pin_name": "CANL",
+    "profile_ref": "prof_can_l_5v",
+    "net_ref": "net_can0_l"
+  },
+  {
+    "id": "np_j1_enable",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_j1_drive",
+    "interface_ref": "if_j1_enable",
+    "pin_name": "ENABLE",
+    "profile_ref": "prof_enable_5v_in",
+    "net_ref": "net_enable"
+  },
+  {
+    "id": "np_j2_pwr_in",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_j2_drive",
+    "interface_ref": "if_j2_pwr",
+    "pin_name": "24V",
+    "profile_ref": "prof_pwr_24v_sink_4a",
+    "net_ref": "net_24v_main"
+  },
+  {
+    "id": "np_j2_gnd",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_j2_drive",
+    "interface_ref": "if_j2_gnd",
+    "pin_name": "GND",
+    "profile_ref": "prof_gnd_chassis",
+    "net_ref": "net_gnd_chassis"
+  },
+  {
+    "id": "np_j2_canh",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_j2_drive",
+    "interface_ref": "if_j2_can",
+    "pin_name": "CANH",
+    "profile_ref": "prof_can_h_5v",
+    "net_ref": "net_can0_h"
+  },
+  {
+    "id": "np_j2_canl",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_j2_drive",
+    "interface_ref": "if_j2_can",
+    "pin_name": "CANL",
+    "profile_ref": "prof_can_l_5v",
+    "net_ref": "net_can0_l"
+  },
+  {
+    "id": "np_j2_enable",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_j2_drive",
+    "interface_ref": "if_j2_enable",
+    "pin_name": "ENABLE",
+    "profile_ref": "prof_enable_5v_in",
+    "net_ref": "net_enable"
+  }
+]

@@ -1,0 +1,19 @@
+{
+  "description": "AWG to nominal mm2 cross-section lookup. Values are IEC nominal cross-sections, not geometric formula results.",
+  "source": "IEC 60228 / ASTM B258",
+  "entries": [
+    {"awg": 30, "mm2": 0.05,  "od_bare_mm": 0.255, "resistance_ohm_per_km": 338.0},
+    {"awg": 28, "mm2": 0.08,  "od_bare_mm": 0.321, "resistance_ohm_per_km": 213.0},
+    {"awg": 26, "mm2": 0.13,  "od_bare_mm": 0.405, "resistance_ohm_per_km": 133.9},
+    {"awg": 24, "mm2": 0.20,  "od_bare_mm": 0.511, "resistance_ohm_per_km": 84.2},
+    {"awg": 22, "mm2": 0.34,  "od_bare_mm": 0.644, "resistance_ohm_per_km": 53.5},
+    {"awg": 20, "mm2": 0.50,  "od_bare_mm": 0.812, "resistance_ohm_per_km": 33.9},
+    {"awg": 18, "mm2": 0.75,  "od_bare_mm": 1.024, "resistance_ohm_per_km": 21.4},
+    {"awg": 16, "mm2": 1.50,  "od_bare_mm": 1.291, "resistance_ohm_per_km": 13.3},
+    {"awg": 14, "mm2": 2.50,  "od_bare_mm": 1.628, "resistance_ohm_per_km": 8.45},
+    {"awg": 12, "mm2": 4.00,  "od_bare_mm": 2.053, "resistance_ohm_per_km": 5.21},
+    {"awg": 10, "mm2": 6.00,  "od_bare_mm": 2.588, "resistance_ohm_per_km": 3.28},
+    {"awg": 8,  "mm2": 10.0,  "od_bare_mm": 3.264, "resistance_ohm_per_km": 2.06},
+    {"awg": 6,  "mm2": 16.0,  "od_bare_mm": 4.115, "resistance_ohm_per_km": 1.32}
+  ]
+}

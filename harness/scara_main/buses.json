@@ -1,0 +1,42 @@
+[
+  {
+    "id": "bus_can0",
+    "type": "bus",
+    "schema_version": 1,
+    "name": "Drive CAN",
+    "protocol": {
+      "name": "CAN",
+      "variant": "CAN_FD",
+      "bitrate": 1000000,
+      "data_bitrate": 5000000
+    },
+    "domains": [
+      {
+        "id": "logic",
+        "physical_layer": "can_logic_3v3",
+        "nets": {"TX": "net_can0_tx", "RX": "net_can0_rx"},
+        "members": [
+          {"node_ref": "node_mcu",  "interface_ref": "if_can0_logic"},
+          {"node_ref": "node_xcvr", "interface_ref": "if_xcvr_logic"}
+        ]
+      },
+      {
+        "id": "wire",
+        "physical_layer": "can_hs_5v",
+        "topology": "linear",
+        "nets": {"P": "net_can0_h", "N": "net_can0_l"},
+        "pair_ref": "pair_can0",
+        "members": [
+          {"node_ref": "node_xcvr",    "interface_ref": "if_xcvr_bus",  "position": 0, "terminated": true},
+          {"node_ref": "node_j1_drive","interface_ref": "if_j1_can",    "position": 1, "terminated": false},
+          {"node_ref": "node_j2_drive","interface_ref": "if_j2_can",    "position": 2, "terminated": true}
+        ],
+        "termination": {"required_count": 2, "ohms": 120}
+      }
+    ],
+    "bridges": [
+      {"node_ref": "node_xcvr", "from_domain": "logic", "to_domain": "wire"}
+    ],
+    "tags": {"placement": "internal"}
+  }
+]

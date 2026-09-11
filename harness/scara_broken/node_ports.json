@@ -1,0 +1,62 @@
+[
+  {
+    "id": "np_mcu_pwr_out",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_mcu",
+    "interface_ref": "if_pwr_out",
+    "pin_name": "24V_OUT",
+    "profile_ref": "prof_pwr_24v_source",
+    "net_ref": "net_24v_bad"
+  },
+  {
+    "id": "np_mcu_can_tx",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_mcu",
+    "interface_ref": "if_can_tx",
+    "pin_name": "CAN_TX_WRONG",
+    "profile_ref": "prof_can_tx_3v3",
+    "net_ref": "net_can_h_wrong"
+  },
+  {
+    "id": "np_mcu_enable",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_mcu",
+    "interface_ref": "if_enable",
+    "pin_name": "ENABLE_OUT",
+    "profile_ref": "prof_pwr_24v_source",
+    "net_ref": "net_enable_bad"
+  },
+  {
+    "id": "np_drive_enable_in",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_drive",
+    "interface_ref": "if_pwr_in",
+    "pin_name": "ENABLE_IN",
+    "profile_ref": "prof_enable_5v_in",
+    "net_ref": "net_enable_bad"
+  },
+  {
+    "id": "np_drive_canh",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_drive",
+    "interface_ref": "if_can",
+    "pin_name": "CANH",
+    "profile_ref": "prof_can_h_5v",
+    "net_ref": "net_can_h_wrong"
+  },
+  {
+    "id": "np_drive_canl",
+    "type": "node_port",
+    "schema_version": 1,
+    "node_ref": "node_drive",
+    "interface_ref": "if_can",
+    "pin_name": "CANL",
+    "profile_ref": "prof_can_l_5v",
+    "net_ref": "net_can_l_disconnected"
+  }
+]

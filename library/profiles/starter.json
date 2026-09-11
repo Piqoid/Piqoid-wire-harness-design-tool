@@ -1,0 +1,219 @@
+[
+  {
+    "id": "prof_pwr_24v_source",
+    "type": "signal_profile",
+    "schema_version": 1,
+    "domain": "power",
+    "direction": "output",
+    "physical_layer": "power_dc",
+    "reference_role": "gnd_chassis",
+    "electrical": {
+      "nominal_v": 24.0,
+      "operating_v": [22.8, 25.2],
+      "abs_max_v": [-0.5, 30.0],
+      "i_supply_max_a": 15.0,
+      "i_supply_continuous_a": 12.0
+    }
+  },
+  {
+    "id": "prof_pwr_24v_sink_2a",
+    "type": "signal_profile",
+    "schema_version": 1,
+    "domain": "power",
+    "direction": "input",
+    "physical_layer": "power_dc",
+    "reference_role": "gnd_chassis",
+    "electrical": {
+      "nominal_v": 24.0,
+      "operating_v": [18.0, 26.4],
+      "abs_max_v": [-0.5, 30.0],
+      "i_draw_typ_a": 1.5,
+      "i_draw_max_a": 2.0
+    }
+  },
+  {
+    "id": "prof_pwr_24v_sink_4a",
+    "type": "signal_profile",
+    "schema_version": 1,
+    "domain": "power",
+    "direction": "input",
+    "physical_layer": "power_dc",
+    "reference_role": "gnd_chassis",
+    "electrical": {
+      "nominal_v": 24.0,
+      "operating_v": [18.0, 26.4],
+      "abs_max_v": [-0.5, 30.0],
+      "i_draw_typ_a": 3.0,
+      "i_draw_max_a": 4.0
+    }
+  },
+  {
+    "id": "prof_gnd_chassis",
+    "type": "signal_profile",
+    "schema_version": 1,
+    "domain": "ground",
+    "direction": "passive",
+    "physical_layer": "ground",
+    "electrical": {
+      "nominal_v": 0.0,
+      "operating_v": [0.0, 0.0],
+      "abs_max_v": [-0.5, 0.5]
+    }
+  },
+  {
+    "id": "prof_gnd_logic",
+    "type": "signal_profile",
+    "schema_version": 1,
+    "domain": "ground",
+    "direction": "passive",
+    "physical_layer": "ground",
+    "reference_role": "gnd_logic",
+    "electrical": {
+      "nominal_v": 0.0,
+      "operating_v": [0.0, 0.0],
+      "abs_max_v": [-0.5, 0.5]
+    }
+  },
+  {
+    "id": "prof_dig_out_3v3",
+    "type": "signal_profile",
+    "schema_version": 1,
+    "domain": "digital",
+    "direction": "output",
+    "physical_layer": "logic_3v3",
+    "reference_role": "gnd_logic",
+    "electrical": {
+      "nominal_v": 3.3,
+      "operating_v": [0.0, 3.3],
+      "abs_max_v": [-0.3, 3.6],
+      "v_oh_min": 2.9,
+      "v_ol_max": 0.4
+    }
+  },
+  {
+    "id": "prof_dig_in_3v3",
+    "type": "signal_profile",
+    "schema_version": 1,
+    "domain": "digital",
+    "direction": "input",
+    "physical_layer": "logic_3v3",
+    "reference_role": "gnd_logic",
+    "electrical": {
+      "nominal_v": 3.3,
+      "operating_v": [0.0, 3.3],
+      "abs_max_v": [-0.3, 3.6],
+      "v_ih_min": 2.0,
+      "v_il_max": 0.8
+    }
+  },
+  {
+    "id": "prof_dig_in_5v_ttl",
+    "type": "signal_profile",
+    "schema_version": 1,
+    "domain": "digital",
+    "direction": "input",
+    "physical_layer": "logic_5v",
+    "reference_role": "gnd_logic",
+    "electrical": {
+      "nominal_v": 5.0,
+      "operating_v": [0.0, 5.0],
+      "abs_max_v": [-0.5, 5.5],
+      "v_ih_min": 2.0,
+      "v_il_max": 0.8,
+      "i_draw_typ_a": 0.008,
+      "i_draw_max_a": 0.012
+    }
+  },
+  {
+    "id": "prof_can_tx_3v3",
+    "type": "signal_profile",
+    "schema_version": 1,
+    "domain": "digital",
+    "direction": "output",
+    "physical_layer": "can_logic_3v3",
+    "reference_role": "gnd_logic",
+    "protocol": {"name": "CAN"},
+    "electrical": {
+      "nominal_v": 3.3,
+      "operating_v": [0.0, 3.3],
+      "abs_max_v": [-0.3, 3.6],
+      "v_oh_min": 2.9,
+      "v_ol_max": 0.4
+    }
+  },
+  {
+    "id": "prof_can_rx_3v3",
+    "type": "signal_profile",
+    "schema_version": 1,
+    "domain": "digital",
+    "direction": "input",
+    "physical_layer": "can_logic_3v3",
+    "reference_role": "gnd_logic",
+    "protocol": {"name": "CAN"},
+    "electrical": {
+      "nominal_v": 3.3,
+      "operating_v": [0.0, 3.3],
+      "abs_max_v": [-0.3, 3.6],
+      "v_ih_min": 2.0,
+      "v_il_max": 0.8
+    }
+  },
+  {
+    "id": "prof_can_h_5v",
+    "type": "signal_profile",
+    "schema_version": 1,
+    "domain": "differential",
+    "direction": "bidirectional",
+    "physical_layer": "can_hs_5v",
+    "reference_role": "gnd_logic",
+    "protocol": {"name": "CAN", "variants": ["CAN_2B", "CAN_FD"], "bitrate_max": 5000000},
+    "diff_member": {"pair_role": "P", "partner_role": "N"},
+    "electrical": {
+      "operating_v": [2.0, 4.0],
+      "abs_max_v": [-27.0, 40.0],
+      "recessive_v": 2.5
+    },
+    "differential": {
+      "v_diff_dominant_min": 1.5,
+      "v_diff_recessive_max": 0.5,
+      "v_common_mode": [-2.0, 7.0]
+    }
+  },
+  {
+    "id": "prof_can_l_5v",
+    "type": "signal_profile",
+    "schema_version": 1,
+    "domain": "differential",
+    "direction": "bidirectional",
+    "physical_layer": "can_hs_5v",
+    "reference_role": "gnd_logic",
+    "protocol": {"name": "CAN", "variants": ["CAN_2B", "CAN_FD"], "bitrate_max": 5000000},
+    "diff_member": {"pair_role": "N", "partner_role": "P"},
+    "electrical": {
+      "operating_v": [1.0, 3.0],
+      "abs_max_v": [-27.0, 40.0],
+      "recessive_v": 2.5
+    },
+    "differential": {
+      "v_diff_dominant_min": 1.5,
+      "v_diff_recessive_max": 0.5,
+      "v_common_mode": [-2.0, 7.0]
+    }
+  },
+  {
+    "id": "prof_enable_5v_in",
+    "type": "signal_profile",
+    "schema_version": 1,
+    "domain": "digital",
+    "direction": "input",
+    "physical_layer": "logic_5v",
+    "reference_role": "gnd_logic",
+    "electrical": {
+      "nominal_v": 5.0,
+      "operating_v": [0.0, 5.0],
+      "abs_max_v": [-0.5, 6.0],
+      "v_ih_min": 2.5,
+      "v_il_max": 0.8
+    }
+  }
+]
