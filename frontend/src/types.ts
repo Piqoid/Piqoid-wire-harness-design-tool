@@ -206,4 +206,5 @@ export interface LayoutData {
   schema_version: number;
   nodes: Record<string, { x: number; y: number }>;
   splices: Record<string, { x: number; y: number }>;
+  edges: Record<string, { waypoints: { x: number; y: number }[] }>;
 }

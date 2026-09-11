@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .routes.project import router as project_router
 from .routes.validation import router as validation_router
+from .routes.entities import router as entities_router
 from .routes.ws import router as ws_router
 from . import state
 
@@ -31,6 +32,7 @@ def create_app(project_root: Path) -> FastAPI:
 
     app.include_router(project_router)
     app.include_router(validation_router)
+    app.include_router(entities_router)
     app.include_router(ws_router)
 
     # Serve the built React app if the static directory exists.

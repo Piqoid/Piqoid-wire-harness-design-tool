@@ -5,12 +5,13 @@ import { NetTable } from "./views/NetTable";
 import { WireTable } from "./views/WireTable";
 import { BundleTree } from "./views/BundleTree";
 import { ValidationPanel } from "./views/ValidationPanel";
+import { InspectorPanel } from "./views/InspectorPanel";
 
 const NAV_ITEMS = [
-  { id: "graph",      label: "Graph" },
-  { id: "nets",       label: "Nets" },
-  { id: "wires",      label: "Wires" },
-  { id: "bundles",    label: "Bundles" },
+  { id: "graph",   label: "Graph" },
+  { id: "nets",    label: "Nets" },
+  { id: "wires",   label: "Wires" },
+  { id: "bundles", label: "Bundles" },
 ] as const;
 
 const S: Record<string, React.CSSProperties> = {
@@ -32,8 +33,10 @@ const S: Record<string, React.CSSProperties> = {
 };
 
 export default function App() {
-  const { loadProject, meta, currentHarness, harnessNames, switchHarness, activeView, setActiveView, diagnostics } =
-    useProjectStore();
+  const {
+    loadProject, meta, currentHarness, harnessNames, switchHarness,
+    activeView, setActiveView, diagnostics, undoStack, redoStack, undo, redo,
+  } = useProjectStore();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,6 +45,15 @@ export default function App() {
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false));
   }, [loadProject]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) { e.preventDefault(); undo(); }
+      if ((e.ctrlKey || e.metaKey) && (e.key === "y" || (e.key === "z" && e.shiftKey))) { e.preventDefault(); redo(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [undo, redo]);
 
   if (loading) return <div style={S.loader}>Loading project…</div>;
   if (error)   return <div style={{ ...S.loader, color: "#f87171" }}>Error: {error}</div>;
@@ -66,7 +78,18 @@ export default function App() {
             {harnessNames.map((n) => <option key={n} value={n}>{n}</option>)}
           </select>
         )}
-        <DiagBadge count={errorCount} color="#f87171" label="err" />
+
+        {/* Undo/redo in header (backup to canvas buttons) */}
+        <button
+          onClick={undo} disabled={!undoStack.length}
+          title="Undo (Ctrl+Z)"
+          style={{ ...undoRedoBtn, color: undoStack.length ? "#94a3b8" : "#374151" }}>↩</button>
+        <button
+          onClick={redo} disabled={!redoStack.length}
+          title="Redo (Ctrl+Y)"
+          style={{ ...undoRedoBtn, color: redoStack.length ? "#94a3b8" : "#374151" }}>↪</button>
+
+        <DiagBadge count={errorCount}   color="#f87171" label="err" />
         <DiagBadge count={warningCount} color="#fbbf24" label="warn" />
       </header>
 
@@ -91,8 +114,13 @@ export default function App() {
 
         {/* Main content + validation panel */}
         <div style={S.main}>
-          <div style={{ flex: 1, overflow: "hidden" }}>
-            {activeView === "graph"   && <GraphCanvas />}
+          <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
+            {activeView === "graph"   && (
+              <>
+                <GraphCanvas />
+                <InspectorPanel />
+              </>
+            )}
             {activeView === "nets"    && <NetTable />}
             {activeView === "wires"   && <WireTable />}
             {activeView === "bundles" && <BundleTree />}
@@ -105,6 +133,11 @@ export default function App() {
     </div>
   );
 }
+
+const undoRedoBtn: React.CSSProperties = {
+  background: "none", border: "none", cursor: "pointer",
+  fontSize: 14, padding: "0 4px", fontFamily: "inherit",
+};
 
 function DiagBadge({ count, color, label }: { count: number; color: string; label: string }) {
   if (count === 0) return null;
