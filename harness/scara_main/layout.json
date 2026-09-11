@@ -1,15 +1,52 @@
 {
-  "schema_version": 1,
-  "nodes": {
-    "node_psu":      { "x": 80,   "y": 340 },
-    "node_mcu":      { "x": 320,  "y": 120 },
-    "node_xcvr":     { "x": 560,  "y": 120 },
-    "node_j1_drive": { "x": 860,  "y": 180 },
-    "node_j2_drive": { "x": 1160, "y": 180 }
+  "edges": {
+    "segment_5ab6cd5207dbb52f": {
+      "waypoints": [
+        {
+          "x": 720,
+          "y": 240
+        }
+      ]
+    },
+    "segment_6343db42ebc56492": {
+      "waypoints": []
+    }
   },
+  "nodes": {
+    "node_j1_drive": {
+      "x": 860,
+      "y": 180
+    },
+    "node_j2_drive": {
+      "x": 1160,
+      "y": 180
+    },
+    "node_mcu": {
+      "x": 320,
+      "y": 120
+    },
+    "node_psu": {
+      "x": 80,
+      "y": 340
+    },
+    "node_xcvr": {
+      "x": 560,
+      "y": 120
+    }
+  },
+  "schema_version": 1,
   "splices": {
-    "spl_pwr_main":  { "x": 620, "y": 340 },
-    "spl_gnd_main":  { "x": 620, "y": 420 },
-    "spl_enable":    { "x": 560, "y": 260 }
+    "spl_enable": {
+      "x": 560,
+      "y": 260
+    },
+    "spl_gnd_main": {
+      "x": 620,
+      "y": 420
+    },
+    "spl_pwr_main": {
+      "x": 620,
+      "y": 340
+    }
   }
 }

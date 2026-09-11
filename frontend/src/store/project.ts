@@ -248,8 +248,8 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     const netRef = srcPort.net_ref ?? tgtPort.net_ref ?? null;
 
     // Determine from/to endpoint kinds
-    const fromKind = "node_port";
-    const toKind   = "node_port";
+    const fromKind = "port";
+    const toKind   = "port";
 
     const segBody: Record<string, unknown> = {
       type: "segment",

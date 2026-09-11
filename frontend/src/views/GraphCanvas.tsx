@@ -255,7 +255,8 @@ function SegmentEdge({
   const d = orthogonalPath(sourceX, sourceY, targetX, targetY, waypts);
 
   return (
-    <g style={{ opacity: dimmed ? 0.12 : 1, transition: "opacity .12s" }}>
+    <g style={{ opacity: dimmed ? 0.12 : 1, transition: "opacity .12s",
+                pointerEvents: isGhost ? "none" : "all" }}>
       {/* Invisible wider hit area */}
       <path d={d} stroke="transparent" strokeWidth={12} fill="none" style={{ cursor: "pointer" }} />
       {/* Visible wire */}
@@ -584,7 +585,7 @@ function GraphCanvasInner() {
         snapGrid={[10, 10]}
         zoomOnDoubleClick={false}
         colorMode="dark"
-        style={{ background: "#0f1623", cursor: wiring.active ? "crosshair" : "default" }}
+        style={{ background: "#4b5563", cursor: wiring.active ? "crosshair" : "default" }}
         deleteKeyCode={["Backspace", "Delete"]}
         onKeyDown={(e) => {
           // Delete selected segment
