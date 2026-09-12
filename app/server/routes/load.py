@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import logging
+import subprocess
+import sys
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
@@ -63,23 +65,87 @@ def get_status() -> dict:
     }
 
 
+def _pick_folder(title: str) -> str | None:
+    """
+    Open a native folder-picker dialog.
+    Always runs in a subprocess so macOS/tkinter main-thread restrictions don't apply.
+    """
+    if sys.platform == "darwin":
+        script = f'POSIX path of (choose folder with prompt "{title}")'
+        try:
+            r = subprocess.run(
+                ["osascript", "-e", script],
+                capture_output=True, text=True, timeout=120,
+            )
+            path = r.stdout.strip().rstrip("/")
+            return path if path else None
+        except Exception as exc:
+            raise RuntimeError(f"osascript dialog failed: {exc}")
+    else:
+        py_script = (
+            "import tkinter as tk, sys\n"
+            "from tkinter import filedialog\n"
+            "root = tk.Tk(); root.withdraw()\n"
+            "root.lift(); root.attributes('-topmost', True)\n"
+            f"p = filedialog.askdirectory(title={title!r}, parent=root)\n"
+            "root.destroy(); print(p, end='')"
+        )
+        try:
+            r = subprocess.run(
+                [sys.executable, "-c", py_script],
+                capture_output=True, text=True, timeout=120,
+            )
+            return r.stdout.strip() or None
+        except Exception as exc:
+            raise RuntimeError(f"Folder dialog failed: {exc}")
+
+
+def _pick_file(title: str, ext: str) -> str | None:
+    """
+    Open a native file-picker dialog filtered to a single extension.
+    Always runs in a subprocess.
+    """
+    if sys.platform == "darwin":
+        # osascript type filter accepts UTI strings or four-char codes; use plain prompt
+        # and let the user pick any file (extension shown in title for guidance).
+        script = f'POSIX path of (choose file with prompt "{title}")'
+        try:
+            r = subprocess.run(
+                ["osascript", "-e", script],
+                capture_output=True, text=True, timeout=120,
+            )
+            path = r.stdout.strip().rstrip("/")
+            return path if path else None
+        except Exception as exc:
+            raise RuntimeError(f"osascript dialog failed: {exc}")
+    else:
+        filetypes = repr([("Bundle", f"*{ext}"), ("All files", "*.*")])
+        py_script = (
+            "import tkinter as tk, sys\n"
+            "from tkinter import filedialog\n"
+            "root = tk.Tk(); root.withdraw()\n"
+            "root.lift(); root.attributes('-topmost', True)\n"
+            f"p = filedialog.askopenfilename(title={title!r}, filetypes={filetypes}, parent=root)\n"
+            "root.destroy(); print(p, end='')"
+        )
+        try:
+            r = subprocess.run(
+                [sys.executable, "-c", py_script],
+                capture_output=True, text=True, timeout=120,
+            )
+            return r.stdout.strip() or None
+        except Exception as exc:
+            raise RuntimeError(f"File dialog failed: {exc}")
+
+
 @router.post("/open-folder-dialog")
 def open_folder_dialog() -> dict:
     """Open an OS folder-picker dialog and return the chosen path (or null)."""
     try:
-        import tkinter as tk
-        from tkinter import filedialog
-
-        root = tk.Tk()
-        root.withdraw()
-        root.lift()
-        root.attributes("-topmost", True)
-        folder = filedialog.askdirectory(title="Open Harness Folder", parent=root)
-        root.destroy()
+        path = _pick_folder("Open Harness Folder")
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Dialog failed: {exc}")
-
-    return {"path": folder if folder else None}
+        raise HTTPException(status_code=500, detail=str(exc))
+    return {"path": path}
 
 
 @router.post("/load-folder")
@@ -99,23 +165,10 @@ def load_folder(body: dict) -> dict:
 def open_pqh_dialog() -> dict:
     """Open an OS file-picker dialog filtered to .pqh files. Returns the chosen path or null."""
     try:
-        import tkinter as tk
-        from tkinter import filedialog
-
-        root = tk.Tk()
-        root.withdraw()
-        root.lift()
-        root.attributes("-topmost", True)
-        path = filedialog.askopenfilename(
-            title="Open .pqh Bundle",
-            filetypes=[("Piqoid bundle", "*.pqh"), ("All files", "*.*")],
-            parent=root,
-        )
-        root.destroy()
+        path = _pick_file("Open .pqh Bundle", ".pqh")
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Dialog failed: {exc}")
-
-    return {"path": path if path else None}
+        raise HTTPException(status_code=500, detail=str(exc))
+    return {"path": path}
 
 
 @router.post("/import-and-load-pqh")
