@@ -6,19 +6,27 @@ import type {
 import {
   connectValidationWS,
   createEntity, deleteEntity, updateEntity,
-  fetchHarness, fetchLayout, fetchProfiles, fetchProject, fetchValidation,
+  fetchHarness, fetchLayout, fetchProfiles, fetchProject, fetchStatus, fetchValidation,
+  loadFolderPath, openFolderDialog,
   saveLayout, validateHypothetical,
 } from "../api/client";
 
 // ── wiring mode ───────────────────────────────────────────────────────────────
 
+export type PortSide = "left" | "right" | "top" | "bottom";
+
 export interface WiringState {
   active: boolean;
+  sourceKind: "port" | "splice";
   sourcePortId: string | null;
   sourceNodeId: string | null;
+  portSide: PortSide | null;
+  /** axis of the segment currently being drawn: "h" = horizontal, "v" = vertical */
+  currentAxis: "h" | "v";
+  /** exact flow-coord position of the source handle; set when wiring starts */
+  sourceHandlePos: { x: number; y: number } | null;
   waypoints: { x: number; y: number }[];
   cursorPos: { x: number; y: number } | null;
-  /** null = not hovering a port; otherwise the pre-validation result */
   hover: { portId: string; severity: "ok" | "warn" | "error"; message: string } | null;
 }
 
@@ -65,6 +73,7 @@ interface ProjectStore {
 
   // Actions — navigation
   loadProject: () => Promise<void>;
+  openHarness: () => Promise<void>;
   switchHarness: (name: string) => Promise<void>;
   setActiveView: (v: ProjectStore["activeView"]) => void;
   setSelectedEntity: (type: string, id: string) => void;
@@ -77,13 +86,34 @@ interface ProjectStore {
   toggleGridSnap: () => void;
 
   // Actions — wiring mode
-  startWiring: (sourcePortId: string, sourceNodeId: string) => void;
+  startWiring: (
+    sourcePortId: string,
+    sourceNodeId: string,
+    portSide: PortSide,
+    sourceHandlePos: { x: number; y: number } | null,
+  ) => void;
+  startWiringFromSplice: (
+    spliceId: string,
+    side: PortSide,
+    handlePos: { x: number; y: number } | null,
+  ) => void;
   cancelWiring: () => void;
   addWaypoint: () => void;
   updateCursorPos: (x: number, y: number) => void;
   setWiringHover: (portId: string, fromPortId: string) => Promise<void>;
   clearWiringHover: () => void;
-  completeWiring: (targetPortId: string, targetNodeId: string) => Promise<void>;
+  completeWiring: (
+    targetPortId: string,
+    targetNodeId: string,
+    targetPortSide: PortSide,
+    targetHandlePos: { x: number; y: number } | null,
+  ) => Promise<void>;
+  completeWiringToSplice: (
+    spliceId: string,
+    side: PortSide,
+    handlePos: { x: number; y: number } | null,
+  ) => Promise<void>;
+  updateSpliceDims: (spliceId: string, width: number, height: number) => void;
 
   // Actions — undo/redo
   undo: () => void;
@@ -91,20 +121,26 @@ interface ProjectStore {
   _pushSnapshot: () => void;
   _scheduleAutosave: () => void;
 
-  // Actions — mutations
-  createSegment: (seg: Partial<Segment>) => Promise<Segment | null>;
-  deleteSegment: (id: string) => Promise<void>;
-  createSplice: (splice: Record<string, unknown>) => Promise<void>;
-  deleteSplice: (id: string) => Promise<void>;
+  // Actions — layout mutations
   moveNode: (nodeId: string, x: number, y: number) => void;
   moveSplice: (spliceId: string, x: number, y: number) => void;
   updateEdgeWaypoints: (segId: string, waypoints: { x: number; y: number }[]) => void;
+  updateNodeStyle: (nodeId: string, style: { width?: number; bgColor?: string }) => void;
+  setPortSide: (portId: string, side: PortSide) => void;
+
+  // Actions — entity mutations
+  createSegment: (seg: Partial<Segment>) => Promise<Segment | null>;
+  deleteSegment: (id: string) => Promise<void>;
+  deleteNode: (id: string) => Promise<void>;
+  createSplice: (splice: Record<string, unknown>) => Promise<void>;
+  deleteSplice: (id: string) => Promise<void>;
   updateNet: (id: string, partial: Record<string, unknown>) => Promise<void>;
   deleteNet: (id: string) => Promise<void>;
   genericCreate: (entityType: string, body: Record<string, unknown>) => Promise<Record<string, unknown>>;
   genericUpdate: (entityType: string, id: string, body: Record<string, unknown>) => Promise<void>;
   genericDelete: (entityType: string, id: string) => Promise<void>;
   reloadHarness: () => Promise<void>;
+  createHarness: (name: string) => Promise<void>;
 }
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -120,35 +156,43 @@ export function resolveNetColor(net: Net): string {
   }
 }
 
+/**
+ * Returns the constrained cursor position during wiring:
+ * - First segment exits perpendicular to source port's node edge (currentAxis)
+ * - Each corner placement toggles the axis (H→V→H...)
+ * - The returned point is where the rubber-band wire currently ends
+ */
+export function getConstrainedCursorPos(
+  wiring: WiringState,
+): { x: number; y: number } | null {
+  if (!wiring.cursorPos) return null;
+
+  const anchor =
+    wiring.waypoints.length > 0
+      ? wiring.waypoints[wiring.waypoints.length - 1]
+      : wiring.sourceHandlePos;
+
+  if (!anchor) return wiring.cursorPos; // Fallback before source pos is known
+
+  return wiring.currentAxis === "h"
+    ? { x: wiring.cursorPos.x, y: anchor.y } // Horizontal: y locked to anchor
+    : { x: anchor.x, y: wiring.cursorPos.y }; // Vertical: x locked to anchor
+}
+
 const EMPTY_WIRING: WiringState = {
   active: false,
+  sourceKind: "port",
   sourcePortId: null,
   sourceNodeId: null,
+  portSide: null,
+  currentAxis: "h",
+  sourceHandlePos: null,
   waypoints: [],
   cursorPos: null,
   hover: null,
 };
 
 const EMPTY_LAYOUT: LayoutData = { schema_version: 1, nodes: {}, splices: {}, edges: {} };
-
-/**
- * The current free end of the in-progress wire: raw cursor position before any
- * corner has been placed, or axis-constrained to the last placed corner afterwards
- * (KiCad-style — one dimension moves at a time, whichever axis the cursor has moved
- * further along). Rendering and corner placement must both derive from this so a
- * click always lands exactly where the rubber-band currently appears to end.
- */
-export function getWireEnd(wiring: WiringState): { x: number; y: number } | null {
-  if (!wiring.cursorPos) return null;
-  const { waypoints, cursorPos } = wiring;
-  if (waypoints.length === 0) return cursorPos;
-  const last = waypoints[waypoints.length - 1];
-  const dx = cursorPos.x - last.x;
-  const dy = cursorPos.y - last.y;
-  return Math.abs(dx) >= Math.abs(dy)
-    ? { x: cursorPos.x, y: last.y }
-    : { x: last.x, y: cursorPos.y };
-}
 
 // ── store ─────────────────────────────────────────────────────────────────────
 
@@ -174,12 +218,26 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   // ── navigation ─────────────────────────────────────────────────────────────
 
   loadProject: async () => {
+    const [status, profs] = await Promise.all([fetchStatus(), fetchProfiles()]);
+    const profileMap: Record<string, SignalProfile> = {};
+    profs.forEach((p) => (profileMap[p.id] = p));
+    set({ profiles: profileMap });
+    if (status.loaded && status.harness_name) {
+      const proj = await fetchProject();
+      set({ meta: proj.meta, harnessNames: proj.harness_names });
+      await get().switchHarness(status.harness_name);
+    }
+  },
+
+  openHarness: async () => {
+    const path = await openFolderDialog();
+    if (!path) return;
+    const { harness_name } = await loadFolderPath(path);
     const [proj, profs] = await Promise.all([fetchProject(), fetchProfiles()]);
     const profileMap: Record<string, SignalProfile> = {};
     profs.forEach((p) => (profileMap[p.id] = p));
     set({ meta: proj.meta, harnessNames: proj.harness_names, profiles: profileMap });
-    const preferred = proj.harness_names.find((n) => !n.includes("broken")) ?? proj.harness_names[0];
-    if (preferred) await get().switchHarness(preferred);
+    await get().switchHarness(harness_name);
   },
 
   switchHarness: async (name: string) => {
@@ -209,21 +267,57 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
   // ── wiring mode ─────────────────────────────────────────────────────────────
 
-  startWiring: (sourcePortId, sourceNodeId) => {
-    set({ wiring: { ...EMPTY_WIRING, active: true, sourcePortId, sourceNodeId } });
+  startWiring: (sourcePortId, sourceNodeId, portSide, sourceHandlePos) => {
+    const currentAxis: "h" | "v" =
+      portSide === "left" || portSide === "right" ? "h" : "v";
+    set({
+      wiring: {
+        ...EMPTY_WIRING,
+        active: true,
+        sourceKind: "port",
+        sourcePortId,
+        sourceNodeId,
+        portSide,
+        currentAxis,
+        sourceHandlePos,
+      },
+    });
+  },
+
+  startWiringFromSplice: (spliceId, side, handlePos) => {
+    const currentAxis: "h" | "v" = side === "left" || side === "right" ? "h" : "v";
+    set({
+      wiring: {
+        ...EMPTY_WIRING,
+        active: true,
+        sourceKind: "splice",
+        sourcePortId: spliceId,
+        sourceNodeId: spliceId,
+        portSide: side,
+        currentAxis,
+        sourceHandlePos: handlePos,
+      },
+    });
   },
 
   cancelWiring: () => set({ wiring: EMPTY_WIRING }),
 
-  addWaypoint: () => set((s) => {
-    const end = getWireEnd(s.wiring);
-    if (!end) return s;
-    return { wiring: { ...s.wiring, waypoints: [...s.wiring.waypoints, end] } };
-  }),
+  addWaypoint: () =>
+    set((s) => {
+      const end = getConstrainedCursorPos(s.wiring);
+      if (!end) return s;
+      const newAxis: "h" | "v" = s.wiring.currentAxis === "h" ? "v" : "h";
+      return {
+        wiring: {
+          ...s.wiring,
+          waypoints: [...s.wiring.waypoints, end],
+          currentAxis: newAxis,
+        },
+      };
+    }),
 
-  updateCursorPos: (x, y) => set((s) => ({
-    wiring: { ...s.wiring, cursorPos: { x, y } },
-  })),
+  updateCursorPos: (x, y) =>
+    set((s) => ({ wiring: { ...s.wiring, cursorPos: { x, y } } })),
 
   setWiringHover: async (targetPortId, fromPortId) => {
     const { currentHarness } = get();
@@ -231,52 +325,82 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     try {
       const result = await validateHypothetical(currentHarness, fromPortId, targetPortId);
       set((s) => ({
-        wiring: { ...s.wiring, hover: { portId: targetPortId, severity: result.severity, message: result.message } },
+        wiring: {
+          ...s.wiring,
+          hover: { portId: targetPortId, severity: result.severity, message: result.message },
+        },
       }));
     } catch {
-      set((s) => ({ wiring: { ...s.wiring, hover: { portId: targetPortId, severity: "ok", message: "" } } }));
+      set((s) => ({
+        wiring: { ...s.wiring, hover: { portId: targetPortId, severity: "ok", message: "" } },
+      }));
     }
   },
 
-  clearWiringHover: () => set((s) => ({
-    wiring: { ...s.wiring, hover: null },
-  })),
+  clearWiringHover: () => set((s) => ({ wiring: { ...s.wiring, hover: null } })),
 
-  completeWiring: async (targetPortId, targetNodeId) => {
+  completeWiring: async (targetPortId, targetNodeId, targetPortSide, targetHandlePos) => {
     const { wiring, currentHarness, harness } = get();
     if (!wiring.active || !wiring.sourcePortId || !currentHarness || !harness) return;
 
-    // Find or determine net for both ports
     const portIndex = Object.fromEntries(harness.node_ports.map((p) => [p.id, p]));
-    const srcPort = portIndex[wiring.sourcePortId];
-    const tgtPort = portIndex[targetPortId];
 
-    if (!srcPort || !tgtPort) {
-      set({ wiring: EMPTY_WIRING });
+    // If source is a port, validate it exists
+    const srcPort = wiring.sourceKind === "port" ? portIndex[wiring.sourcePortId] : null;
+    if (wiring.sourceKind === "port" && !srcPort) { set({ wiring: EMPTY_WIRING }); return; }
+    const tgtPort = portIndex[targetPortId];
+    if (!tgtPort) { set({ wiring: EMPTY_WIRING }); return; }
+
+    // Net mismatch check: both ports assigned → nets must match
+    if (srcPort?.net_ref && tgtPort.net_ref && srcPort.net_ref !== tgtPort.net_ref) {
+      const srcNetName = harness.nets.find((n) => n.id === srcPort.net_ref)?.name ?? srcPort.net_ref;
+      const tgtNetName = harness.nets.find((n) => n.id === tgtPort.net_ref)?.name ?? tgtPort.net_ref;
+      set((s) => ({
+        wiring: {
+          ...s.wiring,
+          hover: { portId: targetPortId, severity: "error", message: `Net mismatch: ${srcNetName} ≠ ${tgtNetName}` },
+        },
+      }));
       return;
     }
 
-    // Check hard violations first
     if (wiring.hover?.severity === "error") {
-      // Toast is shown by the canvas; just cancel
       set({ wiring: EMPTY_WIRING });
       return;
     }
 
     get()._pushSnapshot();
 
-    // Determine net_ref: prefer existing net, else null (user assigns later)
-    const netRef = srcPort.net_ref ?? tgtPort.net_ref ?? null;
+    // Auto-add final corner when current axis doesn't match destination entry axis
+    const destEntryAxis: "h" | "v" =
+      targetPortSide === "left" || targetPortSide === "right" ? "h" : "v";
+    let finalWaypoints = [...wiring.waypoints];
 
-    // Determine from/to endpoint kinds
-    const fromKind = "port";
-    const toKind   = "port";
+    if (wiring.currentAxis !== destEntryAxis && targetHandlePos) {
+      const anchor =
+        finalWaypoints.length > 0
+          ? finalWaypoints[finalWaypoints.length - 1]
+          : wiring.sourceHandlePos;
+      if (anchor) {
+        finalWaypoints.push(
+          destEntryAxis === "h"
+            ? { x: anchor.x, y: targetHandlePos.y }
+            : { x: targetHandlePos.x, y: anchor.y },
+        );
+      }
+    }
+
+    const netRef = srcPort?.net_ref ?? tgtPort.net_ref ?? null;
+    const fromEndpoint =
+      wiring.sourceKind === "splice"
+        ? { kind: "splice", ref: wiring.sourcePortId }
+        : { kind: "port",   ref: wiring.sourcePortId };
 
     const segBody: Record<string, unknown> = {
       type: "segment",
       net_ref: netRef,
-      from: { kind: fromKind, ref: wiring.sourcePortId },
-      to:   { kind: toKind,   ref: targetPortId },
+      from: fromEndpoint,
+      to:   { kind: "port", ref: targetPortId },
       conductor: {},
       length_source: "manual",
     };
@@ -284,19 +408,19 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     try {
       const created = await createEntity(currentHarness, "segments", segBody);
       const newSeg = created as unknown as Segment;
-
-      // Store waypoints in layout
       const layout = get().layout ?? EMPTY_LAYOUT;
+      const spliceEdgeSidesPatch = wiring.sourceKind === "splice" ? {
+        spliceEdgeSides: {
+          ...(layout.spliceEdgeSides ?? {}),
+          [newSeg.id]: { srcSide: wiring.portSide ?? undefined },
+        },
+      } : {};
       const newLayout: LayoutData = {
         ...layout,
-        edges: {
-          ...layout.edges,
-          [newSeg.id]: { waypoints: wiring.waypoints },
-        },
+        edges: { ...layout.edges, [newSeg.id]: { waypoints: finalWaypoints } },
+        ...spliceEdgeSidesPatch,
       };
       await saveLayout(currentHarness, newLayout);
-
-      // Refresh harness data
       await get().reloadHarness();
       get().ws?.send("refresh");
     } catch (e) {
@@ -304,6 +428,93 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     }
 
     set({ wiring: EMPTY_WIRING });
+  },
+
+  completeWiringToSplice: async (spliceId, side, handlePos) => {
+    const { wiring, currentHarness, harness } = get();
+    if (!wiring.active || !wiring.sourcePortId || !currentHarness || !harness) return;
+    // Prevent self-loop on same splice
+    if (wiring.sourceKind === "splice" && wiring.sourceNodeId === spliceId && wiring.portSide === side) {
+      set({ wiring: EMPTY_WIRING }); return;
+    }
+
+    get()._pushSnapshot();
+
+    // Auto-add final corner when axis doesn't match destination entry axis
+    const destEntryAxis: "h" | "v" = side === "left" || side === "right" ? "h" : "v";
+    let finalWaypoints = [...wiring.waypoints];
+
+    if (wiring.currentAxis !== destEntryAxis && handlePos) {
+      const anchor = finalWaypoints.length > 0
+        ? finalWaypoints[finalWaypoints.length - 1]
+        : wiring.sourceHandlePos;
+      if (anchor) {
+        finalWaypoints.push(
+          destEntryAxis === "h"
+            ? { x: anchor.x, y: handlePos.y }
+            : { x: handlePos.x, y: anchor.y },
+        );
+      }
+    }
+
+    const portIndex = Object.fromEntries(harness.node_ports.map((p) => [p.id, p]));
+    const spliceList = harness.splices;
+    const srcSplice = wiring.sourceKind === "splice" ? spliceList.find((s) => s.id === wiring.sourcePortId) : null;
+    const srcPort   = wiring.sourceKind === "port"   ? portIndex[wiring.sourcePortId] : null;
+    const tgtSplice = spliceList.find((s) => s.id === spliceId);
+
+    const netRef = srcPort?.net_ref ?? srcSplice?.net_ref ?? tgtSplice?.net_ref ?? null;
+    const fromEndpoint =
+      wiring.sourceKind === "splice"
+        ? { kind: "splice", ref: wiring.sourcePortId }
+        : { kind: "port",   ref: wiring.sourcePortId };
+
+    const segBody: Record<string, unknown> = {
+      type: "segment",
+      net_ref: netRef,
+      from: fromEndpoint,
+      to:   { kind: "splice", ref: spliceId },
+      conductor: {},
+      length_source: "manual",
+    };
+
+    try {
+      const created = await createEntity(currentHarness, "segments", segBody);
+      const newSeg = created as unknown as Segment;
+      const layout = get().layout ?? EMPTY_LAYOUT;
+      const newLayout: LayoutData = {
+        ...layout,
+        edges: { ...layout.edges, [newSeg.id]: { waypoints: finalWaypoints } },
+        spliceEdgeSides: {
+          ...(layout.spliceEdgeSides ?? {}),
+          [newSeg.id]: {
+            ...(wiring.sourceKind === "splice" ? { srcSide: wiring.portSide ?? undefined } : {}),
+            tgtSide: side,
+          },
+        },
+      };
+      await saveLayout(currentHarness, newLayout);
+      await get().reloadHarness();
+      get().ws?.send("refresh");
+    } catch (e) {
+      console.error("Failed to create segment to splice:", e);
+    }
+
+    set({ wiring: EMPTY_WIRING });
+  },
+
+  updateSpliceDims: (spliceId, width, height) => {
+    set((s) => {
+      if (!s.layout) return s;
+      const existing = s.layout.splices[spliceId] ?? { x: 0, y: 0 };
+      return {
+        layout: {
+          ...s.layout,
+          splices: { ...s.layout.splices, [spliceId]: { ...existing, width, height } },
+        },
+      };
+    });
+    get()._scheduleAutosave();
   },
 
   // ── undo/redo ───────────────────────────────────────────────────────────────
@@ -315,10 +526,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       harness: JSON.parse(JSON.stringify(harness)),
       layout:  JSON.parse(JSON.stringify(layout)),
     };
-    set((s) => ({
-      undoStack: [...s.undoStack.slice(-49), snap],
-      redoStack: [],
-    }));
+    set((s) => ({ undoStack: [...s.undoStack.slice(-49), snap], redoStack: [] }));
   },
 
   undo: () => {
@@ -367,15 +575,16 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     set({ _autosaveTimer: newTimer });
   },
 
-  // ── layout mutations (no server entity write needed, just layout.json) ─────
+  // ── layout mutations ────────────────────────────────────────────────────────
 
   moveNode: (nodeId, x, y) => {
     set((s) => {
       if (!s.layout) return s;
+      const existing = s.layout.nodes[nodeId] ?? {};
       return {
         layout: {
           ...s.layout,
-          nodes: { ...s.layout.nodes, [nodeId]: { x, y } },
+          nodes: { ...s.layout.nodes, [nodeId]: { ...existing, x, y } },
         },
       };
     });
@@ -385,10 +594,11 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   moveSplice: (spliceId, x, y) => {
     set((s) => {
       if (!s.layout) return s;
+      const existing = s.layout.splices[spliceId] ?? {};
       return {
         layout: {
           ...s.layout,
-          splices: { ...s.layout.splices, [spliceId]: { x, y } },
+          splices: { ...s.layout.splices, [spliceId]: { ...existing, x, y } },
         },
       };
     });
@@ -402,6 +612,33 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         layout: {
           ...s.layout,
           edges: { ...s.layout.edges, [segId]: { waypoints } },
+        },
+      };
+    });
+    get()._scheduleAutosave();
+  },
+
+  updateNodeStyle: (nodeId, style) => {
+    set((s) => {
+      if (!s.layout) return s;
+      const existing = s.layout.nodes[nodeId] ?? { x: 0, y: 0 };
+      return {
+        layout: {
+          ...s.layout,
+          nodes: { ...s.layout.nodes, [nodeId]: { ...existing, ...style } },
+        },
+      };
+    });
+    get()._scheduleAutosave();
+  },
+
+  setPortSide: (portId, side) => {
+    set((s) => {
+      if (!s.layout) return s;
+      return {
+        layout: {
+          ...s.layout,
+          portSides: { ...(s.layout.portSides ?? {}), [portId]: side },
         },
       };
     });
@@ -431,16 +668,57 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   },
 
   deleteSegment: async (id) => {
-    const { currentHarness } = get();
-    if (!currentHarness) return;
+    const { currentHarness, harness } = get();
+    if (!currentHarness || !harness) return;
     get()._pushSnapshot();
+
+    // Cascade: strip this segment from any bundle that references it
+    const affectedBundles = harness.bundles.filter((b) => b.segment_refs.includes(id));
+    await Promise.all(
+      affectedBundles.map((b) =>
+        updateEntity(currentHarness, "bundles", b.id, {
+          segment_refs: b.segment_refs.filter((r) => r !== id),
+        }).catch(() => {}),
+      ),
+    );
+
     await deleteEntity(currentHarness, "segments", id);
-    // Remove from layout.edges too
+
     set((s) => {
       if (!s.layout) return s;
       const edges = { ...s.layout.edges };
       delete edges[id];
-      return { layout: { ...s.layout, edges } };
+      const spliceEdgeSides = { ...(s.layout.spliceEdgeSides ?? {}) };
+      delete spliceEdgeSides[id];
+      return { layout: { ...s.layout, edges, spliceEdgeSides } };
+    });
+    await get().reloadHarness();
+    get().ws?.send("refresh");
+  },
+
+  deleteNode: async (id) => {
+    const { currentHarness, harness } = get();
+    if (!currentHarness || !harness) return;
+    get()._pushSnapshot();
+    // Delete all ports belonging to this node first
+    const ports = harness.node_ports.filter((p) => p.node_ref === id);
+    for (const p of ports) {
+      await deleteEntity(currentHarness, "node_ports", p.id).catch(() => {});
+    }
+    // Delete segments connected to those ports
+    const portIds = new Set(ports.map((p) => p.id));
+    const connectedSegs = harness.segments.filter(
+      (s) => portIds.has(s.from.ref) || portIds.has(s.to.ref),
+    );
+    for (const s of connectedSegs) {
+      await deleteEntity(currentHarness, "segments", s.id).catch(() => {});
+    }
+    await deleteEntity(currentHarness, "nodes", id);
+    set((s) => {
+      if (!s.layout) return s;
+      const nodes = { ...s.layout.nodes };
+      delete nodes[id];
+      return { layout: { ...s.layout, nodes } };
     });
     await get().reloadHarness();
     get().ws?.send("refresh");
@@ -514,5 +792,20 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     await deleteEntity(currentHarness, entityType, id);
     await get().reloadHarness();
     get().ws?.send("refresh");
+  },
+
+  createHarness: async (name) => {
+    const resp = await fetch("/api/harness", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    if (!resp.ok) {
+      const text = await resp.text();
+      throw new Error(text);
+    }
+    const proj = await fetchProject();
+    set({ harnessNames: proj.harness_names });
+    await get().switchHarness(name);
   },
 }));

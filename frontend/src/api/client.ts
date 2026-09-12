@@ -2,6 +2,40 @@ import type { Diagnostic, HarnessData, LayoutData, ProjectMeta, SignalProfile } 
 
 const BASE = "";  // same origin
 
+// ── harness load ──────────────────────────────────────────────────────────────
+
+export interface HarnessStatus {
+  loaded: boolean;
+  harness_name?: string;
+  harness_dir?: string;
+}
+
+export async function fetchStatus(): Promise<HarnessStatus> {
+  const r = await fetch(`${BASE}/api/status`);
+  if (!r.ok) throw new Error(`GET /api/status: ${r.status}`);
+  return r.json();
+}
+
+export async function openFolderDialog(): Promise<string | null> {
+  const r = await fetch(`${BASE}/api/open-folder-dialog`, { method: "POST" });
+  if (!r.ok) throw new Error(`POST /api/open-folder-dialog: ${r.status}`);
+  const data = await r.json();
+  return data.path ?? null;
+}
+
+export async function loadFolderPath(path: string): Promise<{ harness_name: string }> {
+  const r = await fetch(`${BASE}/api/load-folder`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path }),
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({ detail: r.statusText }));
+    throw new Error(err.detail ?? r.statusText);
+  }
+  return r.json();
+}
+
 // ── reads ─────────────────────────────────────────────────────────────────────
 
 export async function fetchProject(): Promise<{ meta: ProjectMeta; harness_names: string[] }> {

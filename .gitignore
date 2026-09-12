@@ -10,3 +10,5 @@ exports/
 *.pqh
 frontend/node_modules/
 .server_port
+harness/
+.last_harness

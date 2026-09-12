@@ -30,14 +30,17 @@ const S: Record<string, React.CSSProperties> = {
   vPanel: { flexShrink: 0, borderTop: "1px solid #2d3748" },
   loader: { display: "flex", alignItems: "center", justifyContent: "center",
             height: "100%", color: "#60a5fa", fontSize: 14 },
+  empty:  { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            height: "100%", gap: 16, color: "#94a3b8", fontSize: 14 },
 };
 
 export default function App() {
   const {
-    loadProject, meta, currentHarness, harnessNames, switchHarness,
+    loadProject, openHarness, meta, currentHarness,
     activeView, setActiveView, diagnostics, undoStack, redoStack, undo, redo,
   } = useProjectStore();
   const [loading, setLoading] = useState(true);
+  const [opening, setOpening] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -55,8 +58,15 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [undo, redo]);
 
-  if (loading) return <div style={S.loader}>Loading project…</div>;
-  if (error)   return <div style={{ ...S.loader, color: "#f87171" }}>Error: {error}</div>;
+  const handleOpenHarness = async () => {
+    setOpening(true);
+    setError(null);
+    try { await openHarness(); }
+    catch (e) { setError(String(e)); }
+    finally { setOpening(false); }
+  };
+
+  if (loading) return <div style={S.loader}>Loading…</div>;
 
   const errorCount   = diagnostics.filter((d) => d.severity === "error"   && !d.waived).length;
   const warningCount = diagnostics.filter((d) => d.severity === "warning" && !d.waived).length;
@@ -66,20 +76,20 @@ export default function App() {
       {/* Header */}
       <header style={S.header}>
         <span style={S.title}>⚡ Harness Tool</span>
-        <span style={S.hname}>{meta?.name}</span>
+        {currentHarness && <span style={S.hname}>{meta?.name ?? currentHarness}</span>}
         <div style={{ flex: 1 }} />
-        {harnessNames.length > 1 && (
-          <select
-            value={currentHarness ?? ""}
-            onChange={(e) => switchHarness(e.target.value)}
-            style={{ background: "#2d3748", color: "#e2e8f0", border: "1px solid #4a5568",
-                     padding: "3px 6px", borderRadius: 4, fontSize: 12, fontFamily: "inherit" }}
-          >
-            {harnessNames.map((n) => <option key={n} value={n}>{n}</option>)}
-          </select>
-        )}
 
-        {/* Undo/redo in header (backup to canvas buttons) */}
+        <button
+          onClick={handleOpenHarness}
+          disabled={opening}
+          style={headerBtn}
+        >
+          {opening ? "Opening…" : "Open Harness"}
+        </button>
+        <button disabled style={{ ...headerBtn, opacity: 0.38, cursor: "not-allowed" }}>
+          Export
+        </button>
+
         <button
           onClick={undo} disabled={!undoStack.length}
           title="Undo (Ctrl+Z)"
@@ -93,43 +103,59 @@ export default function App() {
         <DiagBadge count={warningCount} color="#fbbf24" label="warn" />
       </header>
 
-      <div style={S.body}>
-        {/* Sidebar nav */}
-        <nav style={S.nav}>
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item.id}
-              style={{
-                ...S.navBtn,
-                background: activeView === item.id ? "#1e3a5f" : "none",
-                color:       activeView === item.id ? "#60a5fa" : "#94a3b8",
-                borderLeft:  activeView === item.id ? "2px solid #3b82f6" : "2px solid transparent",
-              }}
-              onClick={() => setActiveView(item.id as typeof activeView)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
+      {error && (
+        <div style={{ background: "#7f1d1d", color: "#fca5a5", padding: "6px 14px", fontSize: 12 }}>
+          {error}
+        </div>
+      )}
 
-        {/* Main content + validation panel */}
-        <div style={S.main}>
-          <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
-            {activeView === "graph"   && (
-              <>
-                <GraphCanvas />
-                <InspectorPanel />
-              </>
-            )}
-            {activeView === "nets"    && <NetTable />}
-            {activeView === "wires"   && <WireTable />}
-            {activeView === "bundles" && <BundleTree />}
-          </div>
-          <div style={S.vPanel}>
-            <ValidationPanel />
+      {!currentHarness ? (
+        <div style={S.empty}>
+          <span style={{ fontSize: 32 }}>📂</span>
+          <span>No harness loaded</span>
+          <button onClick={handleOpenHarness} disabled={opening} style={openBtn}>
+            {opening ? "Opening…" : "Open Harness Folder"}
+          </button>
+        </div>
+      ) : (
+        <div style={S.body}>
+          {/* Sidebar nav */}
+          <nav style={S.nav}>
+            {NAV_ITEMS.map((item) => (
+              <button
+                key={item.id}
+                style={{
+                  ...S.navBtn,
+                  background: activeView === item.id ? "#1e3a5f" : "none",
+                  color:       activeView === item.id ? "#60a5fa" : "#94a3b8",
+                  borderLeft:  activeView === item.id ? "2px solid #3b82f6" : "2px solid transparent",
+                }}
+                onClick={() => setActiveView(item.id as typeof activeView)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </nav>
+
+          {/* Main content + validation panel */}
+          <div style={S.main}>
+            <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
+              {activeView === "graph"   && (
+                <>
+                  <GraphCanvas />
+                  <InspectorPanel />
+                </>
+              )}
+              {activeView === "nets"    && <NetTable />}
+              {activeView === "wires"   && <WireTable />}
+              {activeView === "bundles" && <BundleTree />}
+            </div>
+            <div style={S.vPanel}>
+              <ValidationPanel />
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -137,6 +163,18 @@ export default function App() {
 const undoRedoBtn: React.CSSProperties = {
   background: "none", border: "none", cursor: "pointer",
   fontSize: 14, padding: "0 4px", fontFamily: "inherit",
+};
+
+const headerBtn: React.CSSProperties = {
+  background: "#2d3748", color: "#e2e8f0", border: "1px solid #4a5568",
+  padding: "3px 10px", borderRadius: 4, fontSize: 12, fontFamily: "inherit",
+  cursor: "pointer",
+};
+
+const openBtn: React.CSSProperties = {
+  background: "#1e3a5f", color: "#60a5fa", border: "1px solid #3b82f6",
+  padding: "8px 20px", borderRadius: 6, fontSize: 14, fontFamily: "inherit",
+  cursor: "pointer",
 };
 
 function DiagBadge({ count, color, label }: { count: number; color: string; label: string }) {

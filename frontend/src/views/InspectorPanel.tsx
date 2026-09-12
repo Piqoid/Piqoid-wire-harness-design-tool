@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useProjectStore, resolveNetColor } from "../store/project";
 
 export function InspectorPanel() {
@@ -138,10 +138,12 @@ function NetInspector({ id }: { id: string }) {
 // ── node inspector ────────────────────────────────────────────────────────────
 
 function NodeInspector({ id }: { id: string }) {
-  const { harness, diagnostics } = useProjectStore();
-  const node = harness?.nodes.find((n) => n.id === id);
+  const { harness, layout, diagnostics, updateNodeStyle } = useProjectStore();
+  const node  = harness?.nodes.find((n) => n.id === id);
   const ports = harness?.node_ports.filter((p) => p.node_ref === id) ?? [];
   const diags = diagnostics.filter((d) => d.entities.includes(id));
+  const layoutEntry = layout?.nodes[id];
+  const [bgColor, setBgColor] = useState(layoutEntry?.bgColor ?? "#1e2d4a");
 
   if (!node) return <Empty msg="Node not found" />;
 
@@ -150,6 +152,28 @@ function NodeInspector({ id }: { id: string }) {
       <Field label="Name"><span style={{ color: "#e2e8f0", fontWeight: 500 }}>{node.name}</span></Field>
       {node.designator && <Field label="Designator"><span style={{ color: "#60a5fa" }}>{node.designator}</span></Field>}
       {node.part_ref && <Field label="Part ref"><Gray>{node.part_ref}</Gray></Field>}
+
+      {/* Background colour */}
+      <div style={{ marginTop: 8 }}>
+        <span style={{ fontSize: 10, color: "#64748b" }}>NODE COLOUR</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+          <input type="color" value={bgColor}
+                 onChange={(e) => setBgColor(e.target.value)}
+                 style={{ width: 36, height: 22, cursor: "pointer", background: "none", border: "none" }} />
+          <span style={{ fontSize: 11, color: "#94a3b8", flex: 1 }}>{bgColor}</span>
+          <button
+            onClick={() => updateNodeStyle(id, { bgColor })}
+            style={{ ...miniBtn, color: "#22c55e" }}>apply</button>
+          <button
+            onClick={() => { setBgColor("#1e2d4a"); updateNodeStyle(id, { bgColor: undefined }); }}
+            style={{ ...miniBtn, color: "#94a3b8" }}>reset</button>
+        </div>
+      </div>
+
+      {layoutEntry?.width && (
+        <Field label="Width"><Gray>{Math.round(layoutEntry.width)} px — drag corner to resize</Gray></Field>
+      )}
+
       <div style={{ marginTop: 8 }}>
         <span style={{ fontSize: 10, color: "#64748b" }}>PORTS ({ports.length})</span>
         <div style={{ marginTop: 4, display: "flex", flexWrap: "wrap", gap: 4 }}>

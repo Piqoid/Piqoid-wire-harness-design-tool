@@ -204,7 +204,12 @@ export interface Diagnostic {
 
 export interface LayoutData {
   schema_version: number;
-  nodes: Record<string, { x: number; y: number }>;
-  splices: Record<string, { x: number; y: number }>;
+  nodes: Record<string, { x: number; y: number; width?: number; bgColor?: string }>;
+  splices: Record<string, { x: number; y: number; width?: number; height?: number }>;
   edges: Record<string, { waypoints: { x: number; y: number }[] }>;
+  portSides?: Record<string, "left" | "right" | "top" | "bottom">;
+  spliceEdgeSides?: Record<string, {
+    srcSide?: "left" | "right" | "top" | "bottom";
+    tgtSide?: "left" | "right" | "top" | "bottom";
+  }>;
 }
