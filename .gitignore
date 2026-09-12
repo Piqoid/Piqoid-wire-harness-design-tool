@@ -5,7 +5,7 @@ dist/
 build/
 .venv/
 venv/
-exports/
+/exports/
 .pytest_cache/
 *.pqh
 frontend/node_modules/
