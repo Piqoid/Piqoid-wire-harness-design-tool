@@ -10,9 +10,18 @@ from ..models.project import ProjectMeta, Waiver
 from ..models.signal import SignalProfile
 from .diagnostic import Diagnostic
 from .graph import build_net_graphs
-from .rules.electrical import check_e001, check_e002, check_e003
-from .rules.power import check_pw001_pw005_pw007
-from .rules.structural import check_s001, check_s003, check_s006
+from .rules.bus import (
+    check_b001_b002_b003, check_b004_b005, check_b007, check_b008, check_b009, check_b010_b011,
+)
+from .rules.electrical import (
+    check_e001, check_e002, check_e003, check_e004, check_e005,
+    check_e006, check_e007, check_e008, check_e009, check_e010,
+)
+from .rules.physical import check_p001, check_p002, check_p003, check_p005, check_p006, check_p007
+from .rules.power import check_pw001_pw005_pw007, check_pw002_pw003_pw004_pw006
+from .rules.sheath import check_sh001, check_sh002, check_sh003, check_sh004, check_sh005, check_sh006, check_sh007
+from .rules.structural import check_s001, check_s002, check_s003, check_s004, check_s006
+from .tables import load_ampacity_table, load_awg_table, load_derating_table
 
 
 def load_profiles(library_root: Path) -> dict[str, SignalProfile]:
@@ -71,6 +80,10 @@ def validate(
 
     profiles = load_profiles(library_root)
     waivers = project.meta.waivers if project.meta else []
+    rule_config = project.meta.rule_config if project.meta else None
+    ampacity_table = load_ampacity_table(library_root)
+    derating_table = load_derating_table(library_root)
+    awg_table = load_awg_table(library_root)
 
     all_diagnostics: list[Diagnostic] = []
 
@@ -89,6 +102,8 @@ def validate(
         bundles = harness.bundles
         pairs = harness.pairs
         splices = harness.splices
+        cables = harness.cables
+        nodes = harness.nodes
 
         # Build net graphs once, reuse
         net_graphs = build_net_graphs(nets, segments, node_ports)
@@ -97,18 +112,54 @@ def validate(
         all_diagnostics.extend(check_e001(nets, node_ports, profiles))
         all_diagnostics.extend(check_e002(nets, node_ports, profiles))
         all_diagnostics.extend(check_e003(nets, node_ports, profiles))
+        all_diagnostics.extend(check_e004(pairs, nets, node_ports, profiles))
+        all_diagnostics.extend(check_e005(nets, node_ports, profiles))
+        all_diagnostics.extend(check_e006(nets, node_ports, profiles))
+        all_diagnostics.extend(check_e007(node_ports, profiles))
+        all_diagnostics.extend(check_e008(nets, node_ports, profiles))
+        all_diagnostics.extend(check_e009(nets, node_ports, profiles))
+        all_diagnostics.extend(check_e010(nets, node_ports, segments, profiles, bundles))
 
         # Power
-        all_diagnostics.extend(check_pw001_pw005_pw007(
-            nets, node_ports, profiles, project.meta.rule_config if project.meta else None
+        all_diagnostics.extend(check_pw001_pw005_pw007(nets, node_ports, profiles, rule_config))
+        all_diagnostics.extend(check_pw002_pw003_pw004_pw006(nets, node_ports, profiles, rule_config))
+
+        # Bus / differential pair
+        all_diagnostics.extend(check_b001_b002_b003(pairs, nets, segments))
+        all_diagnostics.extend(check_b004_b005(buses))
+        all_diagnostics.extend(check_b007(buses, nodes, node_ports))
+        all_diagnostics.extend(check_b008(buses))
+        all_diagnostics.extend(check_b009(buses, nodes, node_ports, profiles))
+        all_diagnostics.extend(check_b010_b011(buses))
+
+        # Physical / thermal
+        all_diagnostics.extend(check_p001(
+            nets, segments, node_ports, bundles, net_graphs, profiles,
+            ampacity_table, derating_table, rule_config,
         ))
+        all_diagnostics.extend(check_p002(nets, segments, node_ports, net_graphs, profiles, awg_table))
+        all_diagnostics.extend(check_p003(nets, segments, node_ports, profiles, rule_config))
+        all_diagnostics.extend(check_p005(segments, cables))
+        all_diagnostics.extend(check_p006(segments, bundles))
+        all_diagnostics.extend(check_p007(segments, rule_config))
+
+        # Sheath
+        all_diagnostics.extend(check_sh001(bundles))
+        all_diagnostics.extend(check_sh002(bundles))
+        all_diagnostics.extend(check_sh003(bundles))
+        all_diagnostics.extend(check_sh004(bundles))
+        all_diagnostics.extend(check_sh005(bundles))
+        all_diagnostics.extend(check_sh006(bundles, cables))
+        all_diagnostics.extend(check_sh007(bundles))
 
         # Structural
         all_diagnostics.extend(check_s001(nets, segments, node_ports, net_graphs))
+        all_diagnostics.extend(check_s002(nets, segments))
         all_diagnostics.extend(check_s003(segments, nets))
+        all_diagnostics.extend(check_s004(node_ports))
         all_diagnostics.extend(check_s006(
             nets, segments, node_ports, buses, bundles, pairs, splices,
-            cables=harness.cables,
+            cables=cables,
         ))
 
     apply_waivers(all_diagnostics, waivers)

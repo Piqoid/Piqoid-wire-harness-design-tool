@@ -17,7 +17,7 @@ import {
   SelectionMode,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { useProjectStore, resolveNetColor } from "../store/project";
+import { useProjectStore, resolveNetColor, getWireEnd } from "../store/project";
 import type { HarnessData, LayoutData, Net, NodePort } from "../types";
 
 // ── orthogonal path ───────────────────────────────────────────────────────────
@@ -231,11 +231,15 @@ function SpliceNode({ data, selected }: NodeProps<FlowNode<SpliceData>>) {
 // ── custom node: invisible cursor anchor ──────────────────────────────────────
 
 function CursorNode(_: NodeProps<FlowNode<CursorData>>) {
+  // Purely an anchor for the ghost edge's target handle — must never intercept
+  // pointer events, or a pane click meant to place a corner hits this node
+  // instead (it tracks the mouse, so it sits exactly under the cursor) and
+  // onPaneClick silently never fires.
   return (
-    <div style={{ width: 1, height: 1, background: "transparent" }}>
+    <div style={{ width: 1, height: 1, background: "transparent", pointerEvents: "none" }}>
       <Handle id="t" type="target" position={Position.Left}
               isConnectable={false}
-              style={{ width: 0, height: 0, border: "none", background: "transparent" }} />
+              style={{ width: 0, height: 0, border: "none", background: "transparent", pointerEvents: "none" }} />
     </div>
   );
 }
@@ -405,19 +409,22 @@ function GraphCanvasInner() {
   const ghostEdgeId = "__ghost__";
   const cursorNodeId = "__cursor__";
 
+  const wireEnd = useMemo(() => getWireEnd(wiring), [wiring]);
+
   const allNodes: FlowNode[] = useMemo(() => {
-    if (!wiring.active || !wiring.cursorPos) return flowNodes;
+    if (!wiring.active || !wireEnd) return flowNodes;
     const cursorNode: FlowNode = {
       id: cursorNodeId, type: "cursor",
-      position: wiring.cursorPos,
-      draggable: false, selectable: false,
+      position: wireEnd,
+      draggable: false, selectable: false, focusable: false,
+      style: { pointerEvents: "none" },
       data: { _cursor: true } as CursorData,
     };
     return [...flowNodes, cursorNode];
-  }, [flowNodes, wiring.active, wiring.cursorPos]);
+  }, [flowNodes, wiring.active, wireEnd]);
 
   const allEdges: FlowEdge[] = useMemo(() => {
-    if (!wiring.active || !wiring.sourcePortId || !wiring.cursorPos) return flowEdges;
+    if (!wiring.active || !wiring.sourcePortId || !wireEnd) return flowEdges;
     const srcNodeId = wiring.sourceNodeId ?? "";
     const srcPortId = wiring.sourcePortId;
     const ghostEdge: FlowEdge = {
@@ -463,15 +470,18 @@ function GraphCanvasInner() {
     toastTimer.current = setTimeout(() => setToast(null), 3000);
   };
 
-  const onPaneClick = useCallback((e: React.MouseEvent) => {
+  const onPaneClick = useCallback(() => {
     if (wiring.active) {
-      const pos = screenToFlowPosition({ x: e.clientX, y: e.clientY });
-      addWaypoint(pos.x, pos.y);
+      // Corner lands wherever the (possibly axis-constrained) ghost wire end
+      // currently is, not at the click's own coordinates — the click is only
+      // a "confirm" signal here, so it can't rely on the click and the last
+      // rendered cursor position momentarily disagreeing.
+      addWaypoint();
     } else {
       clearHighlight();
       clearSelectedEntity();
     }
-  }, [wiring.active, screenToFlowPosition, addWaypoint, clearHighlight, clearSelectedEntity]);
+  }, [wiring.active, addWaypoint, clearHighlight, clearSelectedEntity]);
 
   const onMouseMove = useCallback((e: React.MouseEvent) => {
     if (!wiring.active) return;

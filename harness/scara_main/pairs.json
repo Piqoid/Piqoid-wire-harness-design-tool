@@ -1,16 +1,19 @@
 [
   {
     "id": "pair_can0",
-    "type": "diff_pair",
-    "schema_version": 1,
-    "nets": {"P": "net_can0_h", "N": "net_can0_l"},
-    "spec": {
-      "z_diff_ohm": 120,
-      "z_tolerance_pct": 10,
-      "twist_lay_mm": 25,
-      "max_skew_mm": 10
+    "nets": {
+      "N": "net_can0_l",
+      "P": "net_can0_h"
     },
+    "require_same_bundle": true,
     "require_same_cable": true,
-    "require_same_bundle": true
+    "schema_version": 1,
+    "spec": {
+      "max_skew_mm": 10,
+      "twist_lay_mm": 25,
+      "z_diff_ohm": 120,
+      "z_tolerance_pct": 10
+    },
+    "type": "diff_pair"
   }
 ]

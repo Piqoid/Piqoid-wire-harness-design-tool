@@ -1,188 +1,244 @@
 [
   {
-    "id": "node_mcu",
-    "type": "node",
-    "schema_version": 1,
-    "name": "Main MCU",
-    "designator": "U1",
-    "part_ref": "part_stm32h743",
-    "part_version_hash": "abc001",
-    "interfaces": [
-      {
-        "id": "if_can0_logic",
-        "name": "CAN0 Logic",
-        "port_refs": ["np_mcu_can0_tx", "np_mcu_can0_rx"],
-        "bus_ref": "bus_can0",
-        "bus_domain": "logic"
-      },
-      {
-        "id": "if_pwr_in",
-        "name": "3.3V Supply",
-        "port_refs": ["np_mcu_pwr_in"],
-        "bus_ref": null,
-        "bus_domain": null
-      },
-      {
-        "id": "if_gnd",
-        "name": "GND",
-        "port_refs": ["np_mcu_gnd"],
-        "bus_ref": null,
-        "bus_domain": null
-      },
-      {
-        "id": "if_enable_out",
-        "name": "Enable Output",
-        "port_refs": ["np_mcu_enable_out"],
-        "bus_ref": null,
-        "bus_domain": null
-      }
-    ],
-    "tags": {"placement": "internal", "zone": "cabinet"}
-  },
-  {
-    "id": "node_xcvr",
-    "type": "node",
-    "schema_version": 1,
-    "name": "CAN Transceiver",
-    "designator": "U2",
-    "part_ref": "part_tcan1042",
-    "part_version_hash": "abc002",
-    "interfaces": [
-      {
-        "id": "if_xcvr_logic",
-        "name": "Logic Side",
-        "port_refs": ["np_xcvr_tx", "np_xcvr_rx"],
-        "bus_ref": "bus_can0",
-        "bus_domain": "logic"
-      },
-      {
-        "id": "if_xcvr_bus",
-        "name": "Bus Side",
-        "port_refs": ["np_xcvr_canh", "np_xcvr_canl"],
-        "bus_ref": "bus_can0",
-        "bus_domain": "wire"
-      },
-      {
-        "id": "if_xcvr_pwr",
-        "name": "VCC",
-        "port_refs": ["np_xcvr_vcc"],
-        "bus_ref": null,
-        "bus_domain": null
-      },
-      {
-        "id": "if_xcvr_gnd",
-        "name": "GND",
-        "port_refs": ["np_xcvr_gnd"],
-        "bus_ref": null,
-        "bus_domain": null
-      }
-    ],
-    "tags": {"placement": "internal", "zone": "cabinet"}
-  },
-  {
-    "id": "node_psu",
-    "type": "node",
-    "schema_version": 1,
-    "name": "24V PSU",
-    "designator": "PS1",
-    "part_ref": "part_meanwell_s240",
-    "part_version_hash": "abc003",
-    "interfaces": [
-      {
-        "id": "if_psu_out_pos",
-        "name": "24V Output",
-        "port_refs": ["np_psu_24v_out"],
-        "bus_ref": null,
-        "bus_domain": null
-      },
-      {
-        "id": "if_psu_gnd",
-        "name": "GND",
-        "port_refs": ["np_psu_gnd"],
-        "bus_ref": null,
-        "bus_domain": null
-      }
-    ],
-    "tags": {"placement": "internal", "zone": "cabinet"}
-  },
-  {
-    "id": "node_j1_drive",
-    "type": "node",
-    "schema_version": 1,
-    "name": "J1 Servo Drive",
     "designator": "D1",
-    "part_ref": "part_servo_drive_24v",
-    "part_version_hash": "abc004",
+    "id": "node_j1_drive",
     "interfaces": [
       {
-        "id": "if_j1_pwr",
-        "name": "24V Power",
-        "port_refs": ["np_j1_pwr_in"],
-        "bus_ref": null,
-        "bus_domain": null
-      },
-      {
-        "id": "if_j1_gnd",
-        "name": "GND",
-        "port_refs": ["np_j1_gnd"],
-        "bus_ref": null,
-        "bus_domain": null
-      },
-      {
+        "bus_domain": "wire",
+        "bus_ref": "bus_can0",
         "id": "if_j1_can",
         "name": "CAN Bus",
-        "port_refs": ["np_j1_canh", "np_j1_canl"],
-        "bus_ref": "bus_can0",
-        "bus_domain": "wire"
+        "port_refs": [
+          "np_j1_canh",
+          "np_j1_canl"
+        ]
       },
       {
+        "bus_domain": null,
+        "bus_ref": null,
         "id": "if_j1_enable",
         "name": "Enable",
-        "port_refs": ["np_j1_enable"],
+        "port_refs": [
+          "np_j1_enable"
+        ]
+      },
+      {
+        "bus_domain": null,
         "bus_ref": null,
-        "bus_domain": null
+        "id": "if_j1_gnd",
+        "name": "GND",
+        "port_refs": [
+          "np_j1_gnd"
+        ]
+      },
+      {
+        "bus_domain": null,
+        "bus_ref": null,
+        "id": "if_j1_pwr",
+        "name": "24V Power",
+        "port_refs": [
+          "np_j1_pwr_in"
+        ]
       }
     ],
-    "tags": {"placement": "internal", "zone": "j1_arm"}
-  },
-  {
-    "id": "node_j2_drive",
-    "type": "node",
-    "schema_version": 1,
-    "name": "J2 Servo Drive",
-    "designator": "D2",
+    "name": "J1 Servo Drive",
     "part_ref": "part_servo_drive_24v",
     "part_version_hash": "abc004",
+    "schema_version": 1,
+    "tags": {
+      "placement": "internal",
+      "zone": "j1_arm"
+    },
+    "type": "node"
+  },
+  {
+    "designator": "D2",
+    "id": "node_j2_drive",
     "interfaces": [
       {
-        "id": "if_j2_pwr",
-        "name": "24V Power",
-        "port_refs": ["np_j2_pwr_in"],
-        "bus_ref": null,
-        "bus_domain": null
-      },
-      {
-        "id": "if_j2_gnd",
-        "name": "GND",
-        "port_refs": ["np_j2_gnd"],
-        "bus_ref": null,
-        "bus_domain": null
-      },
-      {
+        "bus_domain": "wire",
+        "bus_ref": "bus_can0",
         "id": "if_j2_can",
         "name": "CAN Bus",
-        "port_refs": ["np_j2_canh", "np_j2_canl"],
-        "bus_ref": "bus_can0",
-        "bus_domain": "wire"
+        "port_refs": [
+          "np_j2_canh",
+          "np_j2_canl"
+        ]
       },
       {
+        "bus_domain": null,
+        "bus_ref": null,
         "id": "if_j2_enable",
         "name": "Enable",
-        "port_refs": ["np_j2_enable"],
+        "port_refs": [
+          "np_j2_enable"
+        ]
+      },
+      {
+        "bus_domain": null,
         "bus_ref": null,
-        "bus_domain": null
+        "id": "if_j2_gnd",
+        "name": "GND",
+        "port_refs": [
+          "np_j2_gnd"
+        ]
+      },
+      {
+        "bus_domain": null,
+        "bus_ref": null,
+        "id": "if_j2_pwr",
+        "name": "24V Power",
+        "port_refs": [
+          "np_j2_pwr_in"
+        ]
       }
     ],
-    "tags": {"placement": "internal", "zone": "j2_arm"}
+    "name": "J2 Servo Drive",
+    "part_ref": "part_servo_drive_24v",
+    "part_version_hash": "abc004",
+    "schema_version": 1,
+    "tags": {
+      "placement": "internal",
+      "zone": "j2_arm"
+    },
+    "type": "node"
+  },
+  {
+    "designator": "U1",
+    "id": "node_mcu",
+    "interfaces": [
+      {
+        "bus_domain": "logic",
+        "bus_ref": "bus_can0",
+        "id": "if_can0_logic",
+        "name": "CAN0 Logic",
+        "port_refs": [
+          "np_mcu_can0_tx",
+          "np_mcu_can0_rx"
+        ]
+      },
+      {
+        "bus_domain": null,
+        "bus_ref": null,
+        "id": "if_enable_out",
+        "name": "Enable Output",
+        "port_refs": [
+          "np_mcu_enable_out"
+        ]
+      },
+      {
+        "bus_domain": null,
+        "bus_ref": null,
+        "id": "if_gnd",
+        "name": "GND",
+        "port_refs": [
+          "np_mcu_gnd"
+        ]
+      },
+      {
+        "bus_domain": null,
+        "bus_ref": null,
+        "id": "if_pwr_in",
+        "name": "3.3V Supply",
+        "port_refs": [
+          "np_mcu_pwr_in"
+        ]
+      }
+    ],
+    "name": "Main MCU",
+    "part_ref": "part_stm32h743",
+    "part_version_hash": "abc001",
+    "schema_version": 1,
+    "tags": {
+      "placement": "internal",
+      "zone": "cabinet"
+    },
+    "type": "node"
+  },
+  {
+    "designator": "PS1",
+    "id": "node_psu",
+    "interfaces": [
+      {
+        "bus_domain": null,
+        "bus_ref": null,
+        "id": "if_psu_gnd",
+        "name": "GND",
+        "port_refs": [
+          "np_psu_gnd"
+        ]
+      },
+      {
+        "bus_domain": null,
+        "bus_ref": null,
+        "id": "if_psu_out_pos",
+        "name": "24V Output",
+        "port_refs": [
+          "np_psu_24v_out"
+        ]
+      }
+    ],
+    "name": "24V PSU",
+    "part_ref": "part_meanwell_s240",
+    "part_version_hash": "abc003",
+    "schema_version": 1,
+    "tags": {
+      "placement": "internal",
+      "zone": "cabinet"
+    },
+    "type": "node"
+  },
+  {
+    "designator": "U2",
+    "id": "node_xcvr",
+    "interfaces": [
+      {
+        "bus_domain": "wire",
+        "bus_ref": "bus_can0",
+        "id": "if_xcvr_bus",
+        "name": "Bus Side",
+        "port_refs": [
+          "np_xcvr_canh",
+          "np_xcvr_canl"
+        ]
+      },
+      {
+        "bus_domain": null,
+        "bus_ref": null,
+        "id": "if_xcvr_gnd",
+        "name": "GND",
+        "port_refs": [
+          "np_xcvr_gnd"
+        ]
+      },
+      {
+        "bus_domain": "logic",
+        "bus_ref": "bus_can0",
+        "id": "if_xcvr_logic",
+        "name": "Logic Side",
+        "port_refs": [
+          "np_xcvr_tx",
+          "np_xcvr_rx"
+        ]
+      },
+      {
+        "bus_domain": null,
+        "bus_ref": null,
+        "id": "if_xcvr_pwr",
+        "name": "VCC",
+        "port_refs": [
+          "np_xcvr_vcc"
+        ]
+      }
+    ],
+    "name": "CAN Transceiver",
+    "part_ref": "part_tcan1042",
+    "part_version_hash": "abc002",
+    "schema_version": 1,
+    "tags": {
+      "placement": "internal",
+      "zone": "cabinet"
+    },
+    "type": "node"
   }
 ]

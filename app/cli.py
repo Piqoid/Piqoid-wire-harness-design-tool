@@ -134,3 +134,7 @@ def schema_cmd(output):
         click.echo(f"Schema written to {output}")
     else:
         click.echo(out, nl=False)
+
+
+if __name__ == "__main__":
+    cli()

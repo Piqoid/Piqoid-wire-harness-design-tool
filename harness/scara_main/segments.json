@@ -4,7 +4,7 @@
       "bnd_base_to_j2"
     ],
     "cable_core": 1,
-    "cable_ref": "cbl_can0_trunk",
+    "cable_ref": "cbl_can0_trunk_b",
     "conductor": {
       "color": "WH",
       "construction": "stranded",
@@ -48,7 +48,7 @@
       "bnd_base_to_j1"
     ],
     "cable_core": 1,
-    "cable_ref": "cbl_can0_trunk",
+    "cable_ref": "cbl_can0_trunk_a",
     "conductor": {
       "color": "WH",
       "construction": "stranded",
@@ -92,7 +92,7 @@
       "bnd_base_to_j2"
     ],
     "cable_core": 2,
-    "cable_ref": "cbl_can0_trunk",
+    "cable_ref": "cbl_can0_trunk_b",
     "conductor": {
       "color": "BU",
       "construction": "stranded",
@@ -127,6 +127,49 @@
     "to": {
       "kind": "port",
       "ref": "np_j2_canl"
+    },
+    "type": "segment"
+  },
+  {
+    "bundle_refs": [
+      "bnd_base_to_j1"
+    ],
+    "cable_core": 2,
+    "cable_ref": "cbl_can0_trunk_a",
+    "conductor": {
+      "color": "BU",
+      "construction": "stranded",
+      "gauge": {
+        "awg": 22,
+        "mm2": 0.34
+      },
+      "insulation": {
+        "material": "PVC",
+        "od_mm": 1.6,
+        "rating_v": 300.0,
+        "temp_rating_c": 105.0
+      },
+      "material": "Cu",
+      "plating": "tin",
+      "stranding": "7/30"
+    },
+    "from": {
+      "kind": "port",
+      "ref": "np_xcvr_canl"
+    },
+    "id": "seg_can0_l_xcvr_to_j1",
+    "label": "W-032",
+    "length_mm": 850.0,
+    "length_source": "measured",
+    "net_ref": "net_can0_l",
+    "schema_version": 1,
+    "tags": {
+      "placement": "internal",
+      "zone": "j1_arm"
+    },
+    "to": {
+      "kind": "port",
+      "ref": "np_j1_canl"
     },
     "type": "segment"
   },
@@ -714,28 +757,6 @@
     "to": {
       "kind": "port",
       "ref": "np_xcvr_vcc"
-    },
-    "type": "segment"
-  },
-  {
-    "bundle_refs": [],
-    "conductor": {
-      "gauge": {},
-      "insulation": {},
-      "material": "Cu"
-    },
-    "from": {
-      "kind": "port",
-      "ref": "np_xcvr_canl"
-    },
-    "id": "segment_5ab6cd5207dbb52f",
-    "length_source": "manual",
-    "net_ref": "net_can0_l",
-    "schema_version": 1,
-    "tags": {},
-    "to": {
-      "kind": "port",
-      "ref": "np_j1_canl"
     },
     "type": "segment"
   }

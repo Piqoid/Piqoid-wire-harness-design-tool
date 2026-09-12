@@ -1,11 +1,23 @@
 [
   {
+    "bus_domain": null,
+    "bus_ref": null,
+    "constraints": {
+      "expected_current_a": null,
+      "max_stub_length_mm": null,
+      "max_voltage_drop_v": 0.5
+    },
+    "declared_signal": {
+      "mode": "strict",
+      "profile_ref": "prof_pwr_24v_source"
+    },
+    "display": {
+      "color": "#dc2626",
+      "label_visible": true,
+      "style": "solid",
+      "width_px": 4
+    },
     "id": "net_24v_main",
-    "type": "net",
-    "schema_version": 1,
-    "name": "24V_MAIN",
-    "net_class": "power",
-    "declared_signal": {"profile_ref": "prof_pwr_24v_source", "mode": "strict"},
     "members": [
       "np_psu_24v_out",
       "np_mcu_pwr_in",
@@ -13,24 +25,180 @@
       "np_j1_pwr_in",
       "np_j2_pwr_in"
     ],
-    "bus_ref": null,
-    "bus_domain": null,
+    "name": "24V_MAIN",
+    "net_class": "power",
     "pair_ref": null,
-    "constraints": {
-      "max_voltage_drop_v": 0.5,
-      "expected_current_a": null,
-      "max_stub_length_mm": null
+    "ring": false,
+    "schema_version": 1,
+    "tags": {
+      "placement": "internal"
     },
-    "display": {"color": "#dc2626", "width_px": 4, "style": "solid", "label_visible": true},
-    "tags": {"placement": "internal"},
-    "ring": false
+    "type": "net"
   },
   {
-    "id": "net_gnd_chassis",
-    "type": "net",
+    "bus_domain": "wire",
+    "bus_ref": "bus_can0",
+    "constraints": {
+      "expected_current_a": 0.05,
+      "max_stub_length_mm": 300,
+      "max_voltage_drop_v": null
+    },
+    "declared_signal": {
+      "mode": "strict",
+      "profile_ref": "prof_can_h_5v"
+    },
+    "display": {
+      "color": "#e11d48",
+      "label_visible": true,
+      "style": "solid",
+      "width_px": 3
+    },
+    "id": "net_can0_h",
+    "members": [
+      "np_xcvr_canh",
+      "np_j1_canh",
+      "np_j2_canh"
+    ],
+    "name": "CAN0_H",
+    "net_class": "signal",
+    "pair_ref": "pair_can0",
+    "ring": false,
     "schema_version": 1,
-    "name": "GND_CHASSIS",
-    "net_class": "ground",
+    "tags": {
+      "criticality": "safety",
+      "placement": "internal"
+    },
+    "type": "net"
+  },
+  {
+    "bus_domain": "wire",
+    "bus_ref": "bus_can0",
+    "constraints": {
+      "expected_current_a": 0.05,
+      "max_stub_length_mm": 300,
+      "max_voltage_drop_v": null
+    },
+    "declared_signal": {
+      "mode": "strict",
+      "profile_ref": "prof_can_l_5v"
+    },
+    "display": {
+      "color": "#2563eb",
+      "label_visible": true,
+      "style": "solid",
+      "width_px": 3
+    },
+    "id": "net_can0_l",
+    "members": [
+      "np_xcvr_canl",
+      "np_j1_canl",
+      "np_j2_canl"
+    ],
+    "name": "CAN0_L",
+    "net_class": "signal",
+    "pair_ref": "pair_can0",
+    "ring": false,
+    "schema_version": 1,
+    "tags": {
+      "criticality": "safety",
+      "placement": "internal"
+    },
+    "type": "net"
+  },
+  {
+    "bus_domain": "logic",
+    "bus_ref": "bus_can0",
+    "declared_signal": {
+      "mode": "strict",
+      "profile_ref": "prof_can_rx_3v3"
+    },
+    "display": {
+      "color": "#0891b2",
+      "label_visible": true,
+      "style": "solid",
+      "width_px": 2
+    },
+    "id": "net_can0_rx",
+    "members": [
+      "np_mcu_can0_rx",
+      "np_xcvr_rx"
+    ],
+    "name": "CAN0_RX",
+    "net_class": "signal",
+    "ring": false,
+    "schema_version": 1,
+    "tags": {
+      "placement": "internal"
+    },
+    "type": "net"
+  },
+  {
+    "bus_domain": "logic",
+    "bus_ref": "bus_can0",
+    "declared_signal": {
+      "mode": "strict",
+      "profile_ref": "prof_can_tx_3v3"
+    },
+    "display": {
+      "color": "#0891b2",
+      "label_visible": true,
+      "style": "solid",
+      "width_px": 2
+    },
+    "id": "net_can0_tx",
+    "members": [
+      "np_mcu_can0_tx",
+      "np_xcvr_tx"
+    ],
+    "name": "CAN0_TX",
+    "net_class": "signal",
+    "ring": false,
+    "schema_version": 1,
+    "tags": {
+      "placement": "internal"
+    },
+    "type": "net"
+  },
+  {
+    "constraints": {
+      "expected_current_a": null,
+      "max_stub_length_mm": null,
+      "max_voltage_drop_v": null
+    },
+    "declared_signal": {
+      "mode": "strict",
+      "profile_ref": "prof_dig_out_3v3"
+    },
+    "display": {
+      "color": "#7c3aed",
+      "label_visible": true,
+      "style": "solid",
+      "width_px": 2
+    },
+    "id": "net_enable",
+    "members": [
+      "np_mcu_enable_out",
+      "np_j1_enable",
+      "np_j2_enable"
+    ],
+    "name": "ENABLE",
+    "net_class": "signal",
+    "ring": false,
+    "schema_version": 1,
+    "tags": {
+      "criticality": "safety",
+      "placement": "internal"
+    },
+    "type": "net"
+  },
+  {
+    "display": {
+      "color": "#000000",
+      "label_visible": false,
+      "style": "solid",
+      "width_px": 2
+    },
+    "id": "net_gnd_chassis",
     "members": [
       "np_mcu_gnd",
       "np_xcvr_gnd",
@@ -38,93 +206,13 @@
       "np_j1_gnd",
       "np_j2_gnd"
     ],
-    "display": {"color": "#000000", "width_px": 2, "style": "solid", "label_visible": false},
-    "tags": {"placement": "internal"},
-    "ring": false
-  },
-  {
-    "id": "net_can0_tx",
-    "type": "net",
+    "name": "GND_CHASSIS",
+    "net_class": "ground",
+    "ring": false,
     "schema_version": 1,
-    "name": "CAN0_TX",
-    "net_class": "signal",
-    "declared_signal": {"profile_ref": "prof_can_tx_3v3", "mode": "strict"},
-    "members": ["np_mcu_can0_tx", "np_xcvr_tx"],
-    "bus_ref": "bus_can0",
-    "bus_domain": "logic",
-    "display": {"color": "#0891b2", "width_px": 2, "style": "solid", "label_visible": true},
-    "tags": {"placement": "internal"},
-    "ring": false
-  },
-  {
-    "id": "net_can0_rx",
-    "type": "net",
-    "schema_version": 1,
-    "name": "CAN0_RX",
-    "net_class": "signal",
-    "declared_signal": {"profile_ref": "prof_can_rx_3v3", "mode": "strict"},
-    "members": ["np_mcu_can0_rx", "np_xcvr_rx"],
-    "bus_ref": "bus_can0",
-    "bus_domain": "logic",
-    "display": {"color": "#0891b2", "width_px": 2, "style": "solid", "label_visible": true},
-    "tags": {"placement": "internal"},
-    "ring": false
-  },
-  {
-    "id": "net_can0_h",
-    "type": "net",
-    "schema_version": 1,
-    "name": "CAN0_H",
-    "net_class": "signal",
-    "declared_signal": {"profile_ref": "prof_can_h_5v", "mode": "strict"},
-    "members": ["np_xcvr_canh", "np_j1_canh", "np_j2_canh"],
-    "bus_ref": "bus_can0",
-    "bus_domain": "wire",
-    "pair_ref": "pair_can0",
-    "constraints": {
-      "max_voltage_drop_v": null,
-      "expected_current_a": 0.05,
-      "max_stub_length_mm": 300
+    "tags": {
+      "placement": "internal"
     },
-    "display": {"color": "#e11d48", "width_px": 3, "style": "solid", "label_visible": true},
-    "tags": {"placement": "internal", "criticality": "safety"},
-    "ring": false
-  },
-  {
-    "id": "net_can0_l",
-    "type": "net",
-    "schema_version": 1,
-    "name": "CAN0_L",
-    "net_class": "signal",
-    "declared_signal": {"profile_ref": "prof_can_l_5v", "mode": "strict"},
-    "members": ["np_xcvr_canl", "np_j1_canl", "np_j2_canl"],
-    "bus_ref": "bus_can0",
-    "bus_domain": "wire",
-    "pair_ref": "pair_can0",
-    "constraints": {
-      "max_voltage_drop_v": null,
-      "expected_current_a": 0.05,
-      "max_stub_length_mm": 300
-    },
-    "display": {"color": "#2563eb", "width_px": 3, "style": "solid", "label_visible": true},
-    "tags": {"placement": "internal", "criticality": "safety"},
-    "ring": false
-  },
-  {
-    "id": "net_enable",
-    "type": "net",
-    "schema_version": 1,
-    "name": "ENABLE",
-    "net_class": "signal",
-    "declared_signal": {"profile_ref": "prof_dig_out_3v3", "mode": "strict"},
-    "members": ["np_mcu_enable_out", "np_j1_enable", "np_j2_enable"],
-    "constraints": {
-      "max_voltage_drop_v": null,
-      "expected_current_a": null,
-      "max_stub_length_mm": null
-    },
-    "display": {"color": "#7c3aed", "width_px": 2, "style": "solid", "label_visible": true},
-    "tags": {"placement": "internal", "criticality": "safety"},
-    "ring": false
+    "type": "net"
   }
 ]

@@ -79,7 +79,7 @@ interface ProjectStore {
   // Actions — wiring mode
   startWiring: (sourcePortId: string, sourceNodeId: string) => void;
   cancelWiring: () => void;
-  addWaypoint: (x: number, y: number) => void;
+  addWaypoint: () => void;
   updateCursorPos: (x: number, y: number) => void;
   setWiringHover: (portId: string, fromPortId: string) => Promise<void>;
   clearWiringHover: () => void;
@@ -130,6 +130,25 @@ const EMPTY_WIRING: WiringState = {
 };
 
 const EMPTY_LAYOUT: LayoutData = { schema_version: 1, nodes: {}, splices: {}, edges: {} };
+
+/**
+ * The current free end of the in-progress wire: raw cursor position before any
+ * corner has been placed, or axis-constrained to the last placed corner afterwards
+ * (KiCad-style — one dimension moves at a time, whichever axis the cursor has moved
+ * further along). Rendering and corner placement must both derive from this so a
+ * click always lands exactly where the rubber-band currently appears to end.
+ */
+export function getWireEnd(wiring: WiringState): { x: number; y: number } | null {
+  if (!wiring.cursorPos) return null;
+  const { waypoints, cursorPos } = wiring;
+  if (waypoints.length === 0) return cursorPos;
+  const last = waypoints[waypoints.length - 1];
+  const dx = cursorPos.x - last.x;
+  const dy = cursorPos.y - last.y;
+  return Math.abs(dx) >= Math.abs(dy)
+    ? { x: cursorPos.x, y: last.y }
+    : { x: last.x, y: cursorPos.y };
+}
 
 // ── store ─────────────────────────────────────────────────────────────────────
 
@@ -196,9 +215,11 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
   cancelWiring: () => set({ wiring: EMPTY_WIRING }),
 
-  addWaypoint: (x, y) => set((s) => ({
-    wiring: { ...s.wiring, waypoints: [...s.wiring.waypoints, { x, y }] },
-  })),
+  addWaypoint: () => set((s) => {
+    const end = getWireEnd(s.wiring);
+    if (!end) return s;
+    return { wiring: { ...s.wiring, waypoints: [...s.wiring.waypoints, end] } };
+  }),
 
   updateCursorPos: (x, y) => set((s) => ({
     wiring: { ...s.wiring, cursorPos: { x, y } },

@@ -1,38 +1,83 @@
 [
   {
+    "conductor": {
+      "color": "RD",
+      "gauge": {
+        "awg": 22,
+        "mm2": 0.34
+      },
+      "material": "Cu"
+    },
+    "from": {
+      "kind": "port",
+      "ref": "np_mcu_pwr_out"
+    },
     "id": "seg_24v_bad",
-    "type": "segment",
-    "schema_version": 1,
+    "length_mm": 300,
+    "length_source": "manual",
     "net_ref": "net_24v_bad",
-    "from": {"kind": "port", "ref": "np_mcu_pwr_out"},
-    "to": {"kind": "port", "ref": "np_drive_enable_in"},
-    "conductor": {"gauge": {"awg": 22, "mm2": 0.34}, "material": "Cu", "color": "RD"},
-    "length_mm": 300,
-    "length_source": "manual",
-    "tags": {"placement": "internal"}
-  },
-  {
-    "id": "seg_enable_bad",
-    "type": "segment",
     "schema_version": 1,
-    "net_ref": "net_enable_bad",
-    "from": {"kind": "port", "ref": "np_mcu_enable"},
-    "to": {"kind": "port", "ref": "np_drive_enable_in"},
-    "conductor": {"gauge": {"awg": 24, "mm2": 0.2}, "material": "Cu", "color": "VT"},
-    "length_mm": 300,
-    "length_source": "manual",
-    "tags": {"placement": "internal"}
+    "tags": {
+      "placement": "internal"
+    },
+    "to": {
+      "kind": "port",
+      "ref": "np_drive_enable_in"
+    },
+    "type": "segment"
   },
   {
+    "conductor": {
+      "color": "WH",
+      "gauge": {
+        "awg": 22,
+        "mm2": 0.34
+      },
+      "material": "Cu"
+    },
+    "from": {
+      "kind": "port",
+      "ref": "np_mcu_can_tx"
+    },
     "id": "seg_can_h_wrong",
-    "type": "segment",
-    "schema_version": 1,
-    "net_ref": "net_can_h_wrong",
-    "from": {"kind": "port", "ref": "np_mcu_can_tx"},
-    "to": {"kind": "port", "ref": "np_drive_canh"},
-    "conductor": {"gauge": {"awg": 22, "mm2": 0.34}, "material": "Cu", "color": "WH"},
     "length_mm": 400,
     "length_source": "manual",
-    "tags": {"placement": "internal"}
+    "net_ref": "net_can_h_wrong",
+    "schema_version": 1,
+    "tags": {
+      "placement": "internal"
+    },
+    "to": {
+      "kind": "port",
+      "ref": "np_drive_canh"
+    },
+    "type": "segment"
+  },
+  {
+    "conductor": {
+      "color": "VT",
+      "gauge": {
+        "awg": 24,
+        "mm2": 0.2
+      },
+      "material": "Cu"
+    },
+    "from": {
+      "kind": "port",
+      "ref": "np_mcu_enable"
+    },
+    "id": "seg_enable_bad",
+    "length_mm": 300,
+    "length_source": "manual",
+    "net_ref": "net_enable_bad",
+    "schema_version": 1,
+    "tags": {
+      "placement": "internal"
+    },
+    "to": {
+      "kind": "port",
+      "ref": "np_drive_enable_in"
+    },
+    "type": "segment"
   }
 ]

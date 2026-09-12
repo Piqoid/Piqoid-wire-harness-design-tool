@@ -116,6 +116,24 @@ class NetGraph:
 
         return seg_current
 
+    def cumulative_path_value(
+        self, source_port_ref: str, seg_value: dict[str, float],
+    ) -> dict[str, float]:
+        """BFS from source; for each reachable node, sum seg_value[seg_id] over every
+        segment on that node's unique tree path from the source. Used by P-002 to
+        accumulate per-segment (resistance x current) contributions along a path."""
+        if source_port_ref not in self.adjacency and source_port_ref not in self.member_ports:
+            return {}
+        cumulative: dict[str, float] = {source_port_ref: 0.0}
+        queue = deque([source_port_ref])
+        while queue:
+            node = queue.popleft()
+            for neighbor, seg_id in self.adjacency.get(node, []):
+                if neighbor not in cumulative:
+                    cumulative[neighbor] = cumulative[node] + seg_value.get(seg_id, 0.0)
+                    queue.append(neighbor)
+        return cumulative
+
 
 def build_net_graphs(
     nets: list[Net],

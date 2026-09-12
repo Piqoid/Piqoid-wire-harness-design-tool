@@ -1,38 +1,49 @@
 [
   {
     "id": "net_24v_bad",
-    "type": "net",
-    "schema_version": 1,
+    "members": [
+      "np_mcu_pwr_out",
+      "np_drive_enable_in"
+    ],
     "name": "24V_OVERLOAD",
     "net_class": "power",
-    "members": ["np_mcu_pwr_out", "np_drive_enable_in"],
-    "ring": false
-  },
-  {
-    "id": "net_enable_bad",
-    "type": "net",
+    "ring": false,
     "schema_version": 1,
-    "name": "ENABLE_24V_ON_5V_PIN",
-    "net_class": "signal",
-    "members": ["np_mcu_enable", "np_drive_enable_in"],
-    "ring": false
+    "type": "net"
   },
   {
     "id": "net_can_h_wrong",
-    "type": "net",
-    "schema_version": 1,
+    "members": [
+      "np_mcu_can_tx",
+      "np_drive_canh"
+    ],
     "name": "CAN_H_WRONG_LAYER",
     "net_class": "signal",
-    "members": ["np_mcu_can_tx", "np_drive_canh"],
-    "ring": false
+    "ring": false,
+    "schema_version": 1,
+    "type": "net"
   },
   {
     "id": "net_can_l_disconnected",
-    "type": "net",
-    "schema_version": 1,
+    "members": [
+      "np_drive_canl"
+    ],
     "name": "CAN_L_DISCONNECTED",
     "net_class": "signal",
-    "members": ["np_drive_canl"],
-    "ring": false
+    "ring": false,
+    "schema_version": 1,
+    "type": "net"
+  },
+  {
+    "id": "net_enable_bad",
+    "members": [
+      "np_mcu_enable",
+      "np_drive_enable_in"
+    ],
+    "name": "ENABLE_24V_ON_5V_PIN",
+    "net_class": "signal",
+    "ring": false,
+    "schema_version": 1,
+    "type": "net"
   }
 ]

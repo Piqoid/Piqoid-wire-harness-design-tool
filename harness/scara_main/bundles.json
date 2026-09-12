@@ -1,10 +1,140 @@
 [
   {
-    "id": "bnd_cabinet",
-    "type": "bundle",
+    "cable_refs": [
+      "cbl_can0_trunk_a"
+    ],
+    "computed": {
+      "bundle_od_mm": 12.8,
+      "conductor_count": 7,
+      "fill_pct": 61.5,
+      "max_ambient_c": 60
+    },
+    "id": "bnd_base_to_j1",
+    "name": "Base to J1 Trunk",
+    "parent_bundle_ref": null,
+    "path_length_mm": 880,
     "schema_version": 1,
+    "segment_refs": [
+      "seg_pwr_splice_to_j1",
+      "seg_gnd_splice_to_j1",
+      "seg_can0_h_xcvr_to_j1",
+      "seg_can0_l_xcvr_to_j1",
+      "seg_enable_splice_to_j1"
+    ],
+    "sheath": {
+      "chemical_resistance": [
+        "oil",
+        "coolant"
+      ],
+      "color": "BK",
+      "flame": {
+        "rating": "UL94-V2",
+        "self_extinguishing": false
+      },
+      "material": "PET",
+      "max_fill_pct": 75,
+      "mechanical": {
+        "abrasion_class": "ISO 6722 Class C",
+        "drag_chain_rated": false,
+        "flexible": true,
+        "ip_rating": null,
+        "min_bend_radius_mm": 50
+      },
+      "nominal_id_mm": 16.0,
+      "notes": "Routes through J1 arm cable management",
+      "outer_od_mm": 17.0,
+      "part_ref": "sheath_ty_flex_16",
+      "shield": {
+        "bond_point": {
+          "node_ref": "node_psu",
+          "note": "M4 stud at PSU chassis"
+        },
+        "coverage_pct": 80,
+        "drain_net_ref": "net_gnd_chassis",
+        "grounded": true,
+        "shielded": true,
+        "termination": "one_end",
+        "type": "tinned_copper_braid"
+      },
+      "temp_range_c": [
+        -40,
+        125
+      ],
+      "type": "braided_sleeve",
+      "wall_mm": 0.5
+    },
+    "tags": {
+      "placement": "internal",
+      "zone": "j1_arm"
+    },
+    "type": "bundle"
+  },
+  {
+    "cable_refs": [
+      "cbl_can0_trunk_b"
+    ],
+    "computed": {
+      "bundle_od_mm": 9.8,
+      "conductor_count": 5,
+      "fill_pct": 52.0,
+      "max_ambient_c": 60
+    },
+    "id": "bnd_base_to_j2",
+    "name": "Base to J2 Trunk",
+    "parent_bundle_ref": null,
+    "path_length_mm": 1430,
+    "schema_version": 1,
+    "segment_refs": [
+      "seg_pwr_splice_to_j2",
+      "seg_gnd_splice_to_j2",
+      "seg_can0_h_j1_to_j2",
+      "seg_can0_l_j1_to_j2",
+      "seg_enable_splice_to_j2"
+    ],
+    "sheath": {
+      "color": "BK",
+      "flame": {
+        "rating": "UL94-V2",
+        "self_extinguishing": false
+      },
+      "material": "PET",
+      "max_fill_pct": 75,
+      "mechanical": {
+        "drag_chain_rated": false,
+        "flexible": true
+      },
+      "nominal_id_mm": 13.0,
+      "notes": "Routes through J2 arm",
+      "outer_od_mm": 14.0,
+      "shield": {
+        "shielded": false
+      },
+      "temp_range_c": [
+        -40,
+        125
+      ],
+      "type": "braided_sleeve",
+      "wall_mm": 0.5
+    },
+    "tags": {
+      "placement": "internal",
+      "zone": "j2_arm"
+    },
+    "type": "bundle"
+  },
+  {
+    "cable_refs": [],
+    "computed": {
+      "bundle_od_mm": 11.5,
+      "conductor_count": 9,
+      "fill_pct": 55.0,
+      "max_ambient_c": 50
+    },
+    "id": "bnd_cabinet",
     "name": "Cabinet Internal",
     "parent_bundle_ref": null,
+    "path_length_mm": 450,
+    "schema_version": 1,
     "segment_refs": [
       "seg_pwr_psu_to_splice",
       "seg_pwr_splice_to_mcu",
@@ -16,128 +146,35 @@
       "seg_can0_rx",
       "seg_enable_mcu_to_splice"
     ],
-    "cable_refs": [],
-    "path_length_mm": 450,
-    "computed": {
-      "conductor_count": 9,
-      "bundle_od_mm": 11.5,
-      "fill_pct": 55.0,
-      "max_ambient_c": 50
-    },
     "sheath": {
-      "type": "split_loom",
+      "color": "BK",
+      "flame": {
+        "rating": "UL94-V0",
+        "self_extinguishing": true
+      },
       "material": "PA6",
-      "color": "BK",
-      "nominal_id_mm": 13.0,
-      "wall_mm": 0.8,
-      "outer_od_mm": 14.6,
       "max_fill_pct": 70,
-      "flame": {"rating": "UL94-V0", "self_extinguishing": true},
-      "temp_range_c": [-25, 100],
-      "shield": {
-        "shielded": false
-      },
       "mechanical": {
-        "flexible": true,
-        "drag_chain_rated": false
-      },
-      "notes": "Cabinet internal loom, not exposed to oil or coolant"
-    },
-    "tags": {"placement": "internal", "zone": "cabinet"}
-  },
-  {
-    "id": "bnd_base_to_j1",
-    "type": "bundle",
-    "schema_version": 1,
-    "name": "Base to J1 Trunk",
-    "parent_bundle_ref": null,
-    "segment_refs": [
-      "seg_pwr_splice_to_j1",
-      "seg_gnd_splice_to_j1",
-      "seg_can0_h_xcvr_to_j1",
-      "seg_can0_l_xcvr_to_j1",
-      "seg_enable_splice_to_j1"
-    ],
-    "cable_refs": ["cbl_can0_trunk"],
-    "path_length_mm": 880,
-    "computed": {
-      "conductor_count": 7,
-      "bundle_od_mm": 12.8,
-      "fill_pct": 61.5,
-      "max_ambient_c": 60
-    },
-    "sheath": {
-      "part_ref": "sheath_ty_flex_16",
-      "type": "braided_sleeve",
-      "material": "PET",
-      "color": "BK",
-      "nominal_id_mm": 16.0,
-      "wall_mm": 0.5,
-      "outer_od_mm": 17.0,
-      "max_fill_pct": 75,
-      "flame": {"rating": "UL94-V2", "self_extinguishing": false},
-      "temp_range_c": [-40, 125],
-      "shield": {
-        "shielded": true,
-        "type": "tinned_copper_braid",
-        "coverage_pct": 80,
-        "grounded": true,
-        "drain_net_ref": "net_gnd_chassis",
-        "termination": "one_end",
-        "bond_point": {"node_ref": "node_psu", "note": "M4 stud at PSU chassis"}
-      },
-      "mechanical": {
-        "abrasion_class": "ISO 6722 Class C",
-        "flexible": true,
-        "min_bend_radius_mm": 50,
         "drag_chain_rated": false,
-        "ip_rating": null
+        "flexible": true
       },
-      "chemical_resistance": ["oil", "coolant"],
-      "notes": "Routes through J1 arm cable management"
-    },
-    "tags": {"placement": "internal", "zone": "j1_arm"}
-  },
-  {
-    "id": "bnd_base_to_j2",
-    "type": "bundle",
-    "schema_version": 1,
-    "name": "Base to J2 Trunk",
-    "parent_bundle_ref": null,
-    "segment_refs": [
-      "seg_pwr_splice_to_j2",
-      "seg_gnd_splice_to_j2",
-      "seg_can0_h_j1_to_j2",
-      "seg_can0_l_j1_to_j2",
-      "seg_enable_splice_to_j2"
-    ],
-    "cable_refs": [],
-    "path_length_mm": 1430,
-    "computed": {
-      "conductor_count": 5,
-      "bundle_od_mm": 9.8,
-      "fill_pct": 52.0,
-      "max_ambient_c": 60
-    },
-    "sheath": {
-      "type": "braided_sleeve",
-      "material": "PET",
-      "color": "BK",
       "nominal_id_mm": 13.0,
-      "wall_mm": 0.5,
-      "outer_od_mm": 14.0,
-      "max_fill_pct": 75,
-      "flame": {"rating": "UL94-V2", "self_extinguishing": false},
-      "temp_range_c": [-40, 125],
+      "notes": "Cabinet internal loom, not exposed to oil or coolant",
+      "outer_od_mm": 14.6,
       "shield": {
         "shielded": false
       },
-      "mechanical": {
-        "flexible": true,
-        "drag_chain_rated": false
-      },
-      "notes": "Routes through J2 arm"
+      "temp_range_c": [
+        -25,
+        100
+      ],
+      "type": "split_loom",
+      "wall_mm": 0.8
     },
-    "tags": {"placement": "internal", "zone": "j2_arm"}
+    "tags": {
+      "placement": "internal",
+      "zone": "cabinet"
+    },
+    "type": "bundle"
   }
 ]

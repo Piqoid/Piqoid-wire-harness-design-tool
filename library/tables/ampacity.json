@@ -1,0 +1,19 @@
+{
+  "description": "Single-conductor copper wire ampacity by AWG and insulation temperature rating. This is the 'automotive practice' standard (project.json rule_config.ampacity_standard = AUTOMOTIVE_PRACTICE): free-air continuous ratings typical of automotive/electronics hookup wire (GXL/SXL/TXL/UL1007/UL1015 style constructions), not a building-wiring code. Chosen over IEC 60364-5-52 / UL 758 because those target fixed mains installations and (a) their published tables don't cover conductors below ~1.5 mm^2 (14 AWG), which is most of a robot control harness, and (b) their grouping/conduit derating factors are calibrated for continuously-loaded raceways in walls, not a flexible loom in open cabinet air -- applying them here would produce confidently-wrong 'too conservative' failures on completely normal 16-24 AWG harness wiring. See P-001 in app/engine/rules/physical.py.",
+  "source": "Remington Industries 'Copper Hook-Up Wire Ampacity by Insulation Temperature Rating' (Revision 0), a standard-format compilation of single-conductor free-air ampacity used broadly across automotive/electronics wire selection (GPT/GXL/SXL/TXL, UL1007/UL1015, MIL-W-16878/1). Reference ambient 30C (86F).",
+  "reference_ambient_c": 30,
+  "does_not_cover": [
+    "Conductors >0000 (4/0) AWG or <40 AWG (out of table range; not expected in a robot harness).",
+    "Insulation temperature ratings other than the listed columns (80/90/105/125/150/200 C); a segment whose insulation.temp_rating_c doesn't match a column falls back to the nearest column not exceeding it, or is left unchecked if below 80C.",
+    "Conduit-embedded or thermally-insulated-wall installations (this is a free-air table).",
+    "Continuous full-rated-current duty over the conductor's full service life at the code-compliance safety margins a building-wiring standard targets; treat P-001 here as a sanity check against thermal damage, not a code-compliance certification."
+  ],
+  "single_conductor_free_air": {
+    "80": {"24": 5.0, "22": 8.0, "20": 10, "18": 15, "16": 19, "14": 27, "12": 36, "10": 47, "8": 65, "6": 95, "4": 125, "3": 145, "2": 170, "1": 200, "0": 230, "00": 270, "000": 315, "0000": 370},
+    "90": {"24": 5.5, "22": 10, "20": 13, "18": 18, "16": 24, "14": 35, "12": 40, "10": 55, "8": 80, "6": 105, "4": 140, "3": 165, "2": 190, "1": 220, "0": 260, "00": 300, "000": 350, "0000": 405},
+    "105": {"24": 6.2, "22": 11, "20": 14, "18": 20, "16": 26, "14": 39, "12": 51, "10": 67, "8": 90, "6": 121, "4": 160, "3": 180, "2": 215, "1": 247, "0": 286, "00": 329, "000": 380, "0000": 446},
+    "125": {"24": 6.7, "22": 12, "20": 15, "18": 22, "16": 28, "14": 42, "12": 55, "10": 72, "8": 97, "6": 131, "4": 172, "3": 194, "2": 232, "1": 266, "0": 309, "00": 355, "000": 410, "0000": 481},
+    "150": {"24": 7.7, "22": 14, "20": 18, "18": 24, "16": 31, "14": 46, "12": 60, "10": 80, "8": 106, "6": 155, "4": 190, "3": 214, "2": 255, "1": 293, "0": 339, "00": 390, "000": 451, "0000": 529},
+    "200": {"24": 8.7, "22": 16, "20": 21, "18": 28, "16": 35, "14": 54, "12": 68, "10": 90, "8": 124, "6": 165, "4": 220, "3": 252, "2": 293, "1": 344, "0": 399, "00": 467, "000": 546, "0000": 629}
+  }
+}

@@ -29,6 +29,8 @@ class BusDomain(StrictModel):
     pair_ref: Optional[str] = None
     members: list[BusMember] = Field(default_factory=list)
     termination: Optional[BusTermination] = None
+    # Transceiver-rated max node count for this domain (B-008). None = not declared / unchecked.
+    max_nodes: Optional[int] = None
 
 
 class BusBridge(StrictModel):

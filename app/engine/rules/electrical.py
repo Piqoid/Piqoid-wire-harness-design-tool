@@ -1,13 +1,19 @@
-"""Electrical rules: E-001, E-002, E-003."""
+"""Electrical rules: E-001 .. E-010."""
 from __future__ import annotations
 
 from typing import Any
 
-from ...models.common import Severity
+from ...models.bundle import Bundle
+from ...models.common import Direction, Domain, NetClass, Severity
 from ...models.net import Net
 from ...models.node import NodePort
+from ...models.pair import DifferentialPair
+from ...models.segment import Segment
 from ...models.signal import SignalProfile
 from ..diagnostic import Diagnostic
+
+DRIVER_DIRECTIONS = {Direction.output, Direction.open_drain, Direction.open_source, Direction.bidirectional}
+POWER_DOMAINS = {Domain.power, Domain.ground}
 
 
 def check_e001(
@@ -221,4 +227,267 @@ def check_e003(
                                     ),
                                     entities=[net.id, p1.id, p2.id],
                                 ))
+    return diagnostics
+
+
+def check_e004(
+    pairs: list[DifferentialPair],
+    nets: list[Net],
+    node_ports: list[NodePort],
+    profiles: dict[str, SignalProfile],
+) -> list[Diagnostic]:
+    """E-004: Pair role. A `pair_role: P` port must land on the net registered as P
+    (and likewise for N). Catches swapped CAN_H/CAN_L-style wiring."""
+    diagnostics = []
+    port_index = {p.id: p for p in node_ports}
+    net_index = {n.id: n for n in nets}
+
+    for pair in pairs:
+        for role, net_id in pair.nets.items():
+            net = net_index.get(net_id)
+            if net is None:
+                continue
+            for pid in net.members:
+                port = port_index.get(pid)
+                if port is None:
+                    continue
+                prof = profiles.get(port.profile_ref)
+                if prof is None or prof.diff_member is None:
+                    continue
+                if prof.diff_member.pair_role != role:
+                    diagnostics.append(Diagnostic(
+                        rule_id="E-004",
+                        severity=Severity.error,
+                        message=(
+                            f"Pair '{pair.id}': port '{port.pin_name}' declares pair_role="
+                            f"{prof.diff_member.pair_role} but sits on net '{net.name}', "
+                            f"registered as {role}"
+                        ),
+                        entities=[pair.id, net.id, port.id],
+                    ))
+    return diagnostics
+
+
+def check_e005(
+    nets: list[Net],
+    node_ports: list[NodePort],
+    profiles: dict[str, SignalProfile],
+) -> list[Diagnostic]:
+    """E-005: Drive conflict. >=2 push-pull outputs on one net. Open-drain/open-source
+    multiples are allowed (the model has no explicit pull-up declaration to check
+    against, so they're treated as the designer's intentional escape hatch)."""
+    diagnostics = []
+    port_index = {p.id: p for p in node_ports}
+
+    for net in nets:
+        push_pull = []
+        for pid in net.members:
+            port = port_index.get(pid)
+            if port is None:
+                continue
+            prof = profiles.get(port.profile_ref)
+            if prof is None:
+                continue
+            if prof.direction == Direction.output:
+                push_pull.append(port)
+        if len(push_pull) >= 2:
+            diagnostics.append(Diagnostic(
+                rule_id="E-005",
+                severity=Severity.error,
+                message=(
+                    f"Net '{net.name}': {len(push_pull)} push-pull outputs drive the same "
+                    f"net ({', '.join(p.pin_name for p in push_pull)})"
+                ),
+                entities=[net.id] + [p.id for p in push_pull],
+            ))
+    return diagnostics
+
+
+def check_e006(
+    nets: list[Net],
+    node_ports: list[NodePort],
+    profiles: dict[str, SignalProfile],
+) -> list[Diagnostic]:
+    """E-006: No driver. Net has only inputs, isn't power/ground, and has no
+    declared_signal (i.e. nothing asserts this net's type/intent on the designer's
+    behalf)."""
+    diagnostics = []
+    port_index = {p.id: p for p in node_ports}
+
+    for net in nets:
+        if net.net_class in (NetClass.power, NetClass.ground):
+            continue
+        if net.declared_signal is not None:
+            continue
+        member_ports = [port_index[pid] for pid in net.members if pid in port_index]
+        if not member_ports:
+            continue
+        has_driver = False
+        has_input = False
+        for port in member_ports:
+            prof = profiles.get(port.profile_ref)
+            if prof is None:
+                continue
+            if prof.direction in DRIVER_DIRECTIONS or prof.domain in POWER_DOMAINS:
+                has_driver = True
+            if prof.direction == Direction.input:
+                has_input = True
+        if has_input and not has_driver:
+            diagnostics.append(Diagnostic(
+                rule_id="E-006",
+                severity=Severity.warning,
+                message=f"Net '{net.name}': only receivers present, no driver and no declared signal type",
+                entities=[net.id],
+            ))
+    return diagnostics
+
+
+def check_e007(
+    node_ports: list[NodePort],
+    profiles: dict[str, SignalProfile],
+) -> list[Diagnostic]:
+    """E-007: Floating port. Not on any net, not marked no_connect."""
+    diagnostics = []
+    for port in node_ports:
+        if port.net_ref is not None:
+            continue
+        prof = profiles.get(port.profile_ref)
+        if prof is not None and prof.domain == Domain.no_connect:
+            continue
+        diagnostics.append(Diagnostic(
+            rule_id="E-007",
+            severity=Severity.warning,
+            message=f"Port '{port.pin_name}' ({port.id}) is not connected to any net and isn't marked no_connect",
+            entities=[port.id],
+        ))
+    return diagnostics
+
+
+def check_e008(
+    nets: list[Net],
+    node_ports: list[NodePort],
+    profiles: dict[str, SignalProfile],
+) -> list[Diagnostic]:
+    """E-008: Reference mismatch. Ports on one signal net reference different grounds."""
+    diagnostics = []
+    port_index = {p.id: p for p in node_ports}
+
+    for net in nets:
+        if net.net_class != NetClass.signal:
+            continue
+        member_ports = [port_index[pid] for pid in net.members if pid in port_index]
+        roles = {}
+        for port in member_ports:
+            prof = profiles.get(port.profile_ref)
+            if prof is None or prof.reference_role is None:
+                continue
+            roles.setdefault(prof.reference_role, []).append(port)
+        if len(roles) > 1:
+            detail = "; ".join(f"{role}: {', '.join(p.pin_name for p in ports)}" for role, ports in roles.items())
+            diagnostics.append(Diagnostic(
+                rule_id="E-008",
+                severity=Severity.warning,
+                message=f"Net '{net.name}': members reference different grounds ({detail})",
+                entities=[net.id] + [p.id for ports in roles.values() for p in ports],
+            ))
+    return diagnostics
+
+
+def check_e009(
+    nets: list[Net],
+    node_ports: list[NodePort],
+    profiles: dict[str, SignalProfile],
+) -> list[Diagnostic]:
+    """E-009: Analog range. Driver's operating_v range must fit within each receiver's
+    operating_v range on an analog net.
+
+    Current-loop sense-resistor declaration isn't modelled yet (no schema field for
+    it), so that half of the rule can't be checked -- deliberately not approximated.
+    """
+    diagnostics = []
+    port_index = {p.id: p for p in node_ports}
+
+    for net in nets:
+        member_ports = [port_index[pid] for pid in net.members if pid in port_index]
+        drivers = []
+        receivers = []
+        for port in member_ports:
+            prof = profiles.get(port.profile_ref)
+            if prof is None or prof.domain != Domain.analog:
+                continue
+            if prof.direction in DRIVER_DIRECTIONS:
+                drivers.append((port, prof))
+            if prof.direction in (Direction.input, Direction.bidirectional):
+                receivers.append((port, prof))
+
+        for d_port, d_prof in drivers:
+            if d_prof.electrical.operating_v is None:
+                continue
+            d_lo, d_hi = d_prof.electrical.operating_v
+            for r_port, r_prof in receivers:
+                if r_prof.electrical.operating_v is None:
+                    continue
+                r_lo, r_hi = r_prof.electrical.operating_v
+                if d_lo < r_lo or d_hi > r_hi:
+                    diagnostics.append(Diagnostic(
+                        rule_id="E-009",
+                        severity=Severity.error,
+                        message=(
+                            f"Net '{net.name}': analog driver '{d_port.pin_name}' range "
+                            f"[{d_lo}, {d_hi}] V exceeds receiver '{r_port.pin_name}' range "
+                            f"[{r_lo}, {r_hi}] V"
+                        ),
+                        entities=[net.id, d_port.id, r_port.id],
+                    ))
+    return diagnostics
+
+
+def check_e010(
+    nets: list[Net],
+    node_ports: list[NodePort],
+    segments: list[Segment],
+    profiles: dict[str, SignalProfile],
+    bundles: list[Bundle],
+) -> list[Diagnostic]:
+    """E-010: Edge rate. Generic digital profile with max_edge_rate_ns on an
+    unshielded external-tagged segment."""
+    diagnostics = []
+    port_index = {p.id: p for p in node_ports}
+    bundle_index = {b.id: b for b in bundles}
+
+    def _is_shielded(seg: Segment) -> bool:
+        for bref in seg.bundle_refs:
+            b = bundle_index.get(bref)
+            if b and b.sheath and b.sheath.shield and b.sheath.shield.shielded:
+                return True
+        return False
+
+    for net in nets:
+        member_ports = [port_index[pid] for pid in net.members if pid in port_index]
+        fast_ports = []
+        for port in member_ports:
+            prof = profiles.get(port.profile_ref)
+            if prof is None or prof.signal_integrity is None:
+                continue
+            if prof.signal_integrity.max_edge_rate_ns is not None:
+                fast_ports.append(port)
+        if not fast_ports:
+            continue
+
+        for seg in segments:
+            if seg.net_ref != net.id:
+                continue
+            if str(seg.tags.get("placement")) != "external":
+                continue
+            if _is_shielded(seg):
+                continue
+            diagnostics.append(Diagnostic(
+                rule_id="E-010",
+                severity=Severity.warning,
+                message=(
+                    f"Segment '{seg.id}' on net '{net.name}' carries a fast edge-rate signal "
+                    f"and is external-placement but unshielded"
+                ),
+                entities=[net.id, seg.id],
+            ))
     return diagnostics

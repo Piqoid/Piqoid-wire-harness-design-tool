@@ -40,6 +40,8 @@ class BundleSheath(StrictModel):
     wall_mm: Optional[float] = None
     outer_od_mm: Optional[float] = None
     max_fill_pct: Optional[float] = None
+    # Actual as-cut sheath length, when shorter than path_length_mm at breakouts (SH-007).
+    cut_length_mm: Optional[float] = None
     flame: Optional[FlameSpec] = None
     temp_range_c: Optional[tuple[float, float]] = None
     shield: Optional[SheathShield] = None

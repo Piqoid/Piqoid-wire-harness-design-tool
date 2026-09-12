@@ -1,27 +1,66 @@
 [
   {
-    "id": "node_mcu",
-    "type": "node",
-    "schema_version": 1,
-    "name": "Main MCU",
-    "designator": "U1",
+    "designator": "D1",
+    "id": "node_drive",
     "interfaces": [
-      {"id": "if_pwr_out",  "name": "24V Out", "port_refs": ["np_mcu_pwr_out"]},
-      {"id": "if_can_tx",   "name": "CAN TX",  "port_refs": ["np_mcu_can_tx"],  "bus_ref": "bus_can0", "bus_domain": "wire"},
-      {"id": "if_enable",   "name": "Enable",  "port_refs": ["np_mcu_enable"]}
+      {
+        "bus_domain": "wire",
+        "bus_ref": "bus_can0",
+        "id": "if_can",
+        "name": "CAN",
+        "port_refs": [
+          "np_drive_canh",
+          "np_drive_canl"
+        ]
+      },
+      {
+        "id": "if_pwr_in",
+        "name": "5V Enable In",
+        "port_refs": [
+          "np_drive_enable_in"
+        ]
+      }
     ],
-    "tags": {"placement": "internal"}
+    "name": "Servo Drive",
+    "schema_version": 1,
+    "tags": {
+      "placement": "internal"
+    },
+    "type": "node"
   },
   {
-    "id": "node_drive",
-    "type": "node",
-    "schema_version": 1,
-    "name": "Servo Drive",
-    "designator": "D1",
+    "designator": "U1",
+    "id": "node_mcu",
     "interfaces": [
-      {"id": "if_pwr_in",   "name": "5V Enable In", "port_refs": ["np_drive_enable_in"]},
-      {"id": "if_can",      "name": "CAN",           "port_refs": ["np_drive_canh", "np_drive_canl"], "bus_ref": "bus_can0", "bus_domain": "wire"}
+      {
+        "bus_domain": "wire",
+        "bus_ref": "bus_can0",
+        "id": "if_can_tx",
+        "name": "CAN TX",
+        "port_refs": [
+          "np_mcu_can_tx"
+        ]
+      },
+      {
+        "id": "if_enable",
+        "name": "Enable",
+        "port_refs": [
+          "np_mcu_enable"
+        ]
+      },
+      {
+        "id": "if_pwr_out",
+        "name": "24V Out",
+        "port_refs": [
+          "np_mcu_pwr_out"
+        ]
+      }
     ],
-    "tags": {"placement": "internal"}
+    "name": "Main MCU",
+    "schema_version": 1,
+    "tags": {
+      "placement": "internal"
+    },
+    "type": "node"
   }
 ]

@@ -33,8 +33,15 @@ class DisplayRule(StrictModel):
 class RuleConfig(StrictModel):
     power_headroom_threshold_pct: float = 80.0
     release_require_measured_lengths: bool = False
-    ampacity_standard: str = "IEC_60364_5_52"
+    # "AUTOMOTIVE_PRACTICE" (library/tables/ampacity.json, library/tables/derating.json)
+    # or "IEC_60364_5_52" / "UL_758" once those table sets exist.
+    ampacity_standard: str = "AUTOMOTIVE_PRACTICE"
     inrush_factor: float = 1.0
+    # Default ambient for P-001/P-002 when a segment's bundle doesn't declare
+    # computed.max_ambient_c. Matches the ampacity table's own reference ambient.
+    ambient_c: float = 30.0
+    # abs_max insulation rating_v must be >= net nominal_v * this factor (P-003).
+    insulation_voltage_margin: float = 1.5
 
 
 class Waiver(StrictModel):

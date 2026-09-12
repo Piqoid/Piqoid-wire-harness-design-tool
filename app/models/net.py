@@ -41,3 +41,6 @@ class Net(StrictModel):
     display: NetDisplay = Field(default_factory=NetDisplay)
     tags: dict[str, str] = Field(default_factory=dict)
     ring: bool = False
+    # True when >1 declared source on a power net is an intentional parallel
+    # supply (PW-006 / current computation), not a design mistake.
+    paralleled: bool = False
