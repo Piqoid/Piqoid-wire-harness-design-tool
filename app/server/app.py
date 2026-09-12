@@ -12,6 +12,7 @@ from .routes.validation import router as validation_router
 from .routes.entities import router as entities_router
 from .routes.ws import router as ws_router
 from .routes.load import router as load_router, LAST_HARNESS_FILE, do_load
+from .routes.exports import router as exports_router
 
 log = logging.getLogger(__name__)
 
@@ -38,6 +39,7 @@ def create_app() -> FastAPI:
     app.include_router(validation_router)
     app.include_router(entities_router)
     app.include_router(ws_router)
+    app.include_router(exports_router)
 
     if STATIC_DIR.exists() and any(STATIC_DIR.iterdir()):
         app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")

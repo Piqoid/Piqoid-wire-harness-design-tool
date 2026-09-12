@@ -7,7 +7,7 @@ import {
   connectValidationWS,
   createEntity, deleteEntity, updateEntity,
   fetchHarness, fetchLayout, fetchProfiles, fetchProject, fetchStatus, fetchValidation,
-  loadFolderPath, openFolderDialog,
+  importAndLoadPqh, loadFolderPath, openFolderDialog, openPqhDialog,
   saveLayout, validateHypothetical,
 } from "../api/client";
 
@@ -74,6 +74,7 @@ interface ProjectStore {
   // Actions — navigation
   loadProject: () => Promise<void>;
   openHarness: () => Promise<void>;
+  importHarness: () => Promise<void>;
   switchHarness: (name: string) => Promise<void>;
   setActiveView: (v: ProjectStore["activeView"]) => void;
   setSelectedEntity: (type: string, id: string) => void;
@@ -127,10 +128,12 @@ interface ProjectStore {
   updateEdgeWaypoints: (segId: string, waypoints: { x: number; y: number }[]) => void;
   updateNodeStyle: (nodeId: string, style: { width?: number; bgColor?: string }) => void;
   setPortSide: (portId: string, side: PortSide) => void;
+  setPortOrder: (nodeId: string, orderedPortIds: string[]) => void;
 
   // Actions — entity mutations
   createSegment: (seg: Partial<Segment>) => Promise<Segment | null>;
   deleteSegment: (id: string) => Promise<void>;
+  deletePort: (portId: string) => Promise<void>;
   deleteNode: (id: string) => Promise<void>;
   createSplice: (splice: Record<string, unknown>) => Promise<void>;
   deleteSplice: (id: string) => Promise<void>;
@@ -238,6 +241,17 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     profs.forEach((p) => (profileMap[p.id] = p));
     set({ meta: proj.meta, harnessNames: proj.harness_names, profiles: profileMap });
     await get().switchHarness(harness_name);
+  },
+
+  importHarness: async () => {
+    const pqhPath = await openPqhDialog();
+    if (!pqhPath) return;
+    const result = await importAndLoadPqh(pqhPath);
+    const [proj, profs] = await Promise.all([fetchProject(), fetchProfiles()]);
+    const profileMap: Record<string, SignalProfile> = {};
+    profs.forEach((p) => (profileMap[p.id] = p));
+    set({ meta: proj.meta, harnessNames: proj.harness_names, profiles: profileMap });
+    await get().switchHarness(result.harness_name);
   },
 
   switchHarness: async (name: string) => {
@@ -645,6 +659,19 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     get()._scheduleAutosave();
   },
 
+  setPortOrder: (nodeId, orderedPortIds) => {
+    set((s) => {
+      if (!s.layout) return s;
+      return {
+        layout: {
+          ...s.layout,
+          portOrder: { ...(s.layout.portOrder ?? {}), [nodeId]: orderedPortIds },
+        },
+      };
+    });
+    get()._scheduleAutosave();
+  },
+
   // ── entity mutations ────────────────────────────────────────────────────────
 
   reloadHarness: async () => {
@@ -696,30 +723,109 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     get().ws?.send("refresh");
   },
 
+  deletePort: async (portId) => {
+    const { currentHarness, harness } = get();
+    if (!currentHarness || !harness) return;
+    get()._pushSnapshot();
+
+    // Find all segments attached to this port
+    const attachedSegs = harness.segments.filter(
+      (s) => (s.from.ref === portId && s.from.kind === "port") ||
+              (s.to.ref === portId && s.to.kind === "port"),
+    );
+    const attachedSegIds = attachedSegs.map((s) => s.id);
+
+    // Cascade: clean up bundle refs for attached segments
+    const affectedBundles = harness.bundles.filter(
+      (b) => b.segment_refs.some((r) => attachedSegIds.includes(r)),
+    );
+    await Promise.all(
+      affectedBundles.map((b) =>
+        updateEntity(currentHarness, "bundles", b.id, {
+          segment_refs: b.segment_refs.filter((r) => !attachedSegIds.includes(r)),
+        }).catch(() => {}),
+      ),
+    );
+
+    // Delete attached segments
+    await Promise.all(
+      attachedSegs.map((s) => deleteEntity(currentHarness, "segments", s.id).catch(() => {})),
+    );
+
+    // Delete the port itself
+    await deleteEntity(currentHarness, "node_ports", portId);
+
+    // Clean up layout
+    set((s) => {
+      if (!s.layout) return s;
+      const edges = { ...s.layout.edges };
+      const spliceEdgeSides = { ...(s.layout.spliceEdgeSides ?? {}) };
+      attachedSegIds.forEach((segId) => {
+        delete edges[segId];
+        delete spliceEdgeSides[segId];
+      });
+      const portSides = { ...(s.layout.portSides ?? {}) };
+      delete portSides[portId];
+      const portOrder = { ...(s.layout.portOrder ?? {}) };
+      for (const nid of Object.keys(portOrder)) {
+        portOrder[nid] = portOrder[nid].filter((pid) => pid !== portId);
+      }
+      return { layout: { ...s.layout, edges, spliceEdgeSides, portSides, portOrder } };
+    });
+
+    await get().reloadHarness();
+    get().ws?.send("refresh");
+  },
+
   deleteNode: async (id) => {
     const { currentHarness, harness } = get();
     if (!currentHarness || !harness) return;
     get()._pushSnapshot();
-    // Delete all ports belonging to this node first
+
     const ports = harness.node_ports.filter((p) => p.node_ref === id);
-    for (const p of ports) {
-      await deleteEntity(currentHarness, "node_ports", p.id).catch(() => {});
-    }
-    // Delete segments connected to those ports
     const portIds = new Set(ports.map((p) => p.id));
     const connectedSegs = harness.segments.filter(
       (s) => portIds.has(s.from.ref) || portIds.has(s.to.ref),
     );
-    for (const s of connectedSegs) {
-      await deleteEntity(currentHarness, "segments", s.id).catch(() => {});
-    }
+    const connectedSegIds = connectedSegs.map((s) => s.id);
+
+    // Cascade: clean up bundle refs for connected segments
+    const affectedBundles = harness.bundles.filter(
+      (b) => b.segment_refs.some((r) => connectedSegIds.includes(r)),
+    );
+    await Promise.all(
+      affectedBundles.map((b) =>
+        updateEntity(currentHarness, "bundles", b.id, {
+          segment_refs: b.segment_refs.filter((r) => !connectedSegIds.includes(r)),
+        }).catch(() => {}),
+      ),
+    );
+
+    await Promise.all(
+      connectedSegs.map((s) => deleteEntity(currentHarness, "segments", s.id).catch(() => {})),
+    );
+    await Promise.all(
+      ports.map((p) => deleteEntity(currentHarness, "node_ports", p.id).catch(() => {})),
+    );
     await deleteEntity(currentHarness, "nodes", id);
+
     set((s) => {
       if (!s.layout) return s;
       const nodes = { ...s.layout.nodes };
       delete nodes[id];
-      return { layout: { ...s.layout, nodes } };
+      const edges = { ...s.layout.edges };
+      const spliceEdgeSides = { ...(s.layout.spliceEdgeSides ?? {}) };
+      const portSides = { ...(s.layout.portSides ?? {}) };
+      const portOrder = { ...(s.layout.portOrder ?? {}) };
+      delete portOrder[id];
+      connectedSegIds.forEach((segId) => {
+        delete edges[segId];
+        delete spliceEdgeSides[segId];
+      });
+      ports.forEach((p) => { delete portSides[p.id]; });
+      return { layout: { ...s.layout, nodes, edges, spliceEdgeSides, portSides, portOrder } };
     });
+
     await get().reloadHarness();
     get().ws?.send("refresh");
   },

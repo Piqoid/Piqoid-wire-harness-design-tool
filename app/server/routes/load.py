@@ -93,3 +93,84 @@ def load_folder(body: dict) -> dict:
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     return {"harness_name": harness_name}
+
+
+@router.post("/open-pqh-dialog")
+def open_pqh_dialog() -> dict:
+    """Open an OS file-picker dialog filtered to .pqh files. Returns the chosen path or null."""
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
+
+        root = tk.Tk()
+        root.withdraw()
+        root.lift()
+        root.attributes("-topmost", True)
+        path = filedialog.askopenfilename(
+            title="Open .pqh Bundle",
+            filetypes=[("Piqoid bundle", "*.pqh"), ("All files", "*.*")],
+            parent=root,
+        )
+        root.destroy()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Dialog failed: {exc}")
+
+    return {"path": path if path else None}
+
+
+@router.post("/import-and-load-pqh")
+def import_and_load_pqh(body: dict) -> dict:
+    """
+    Import a .pqh bundle into a local folder and load it.
+
+    Body: { pqh_path: str, target_dir?: str }
+    If target_dir is omitted, a sibling folder named after the .pqh file is used.
+    Returns: { harness_name: str, target_dir: str }
+    """
+    from ...exports.pqh import import_pqh
+
+    pqh_path_str = (body.get("pqh_path") or "").strip()
+    if not pqh_path_str:
+        raise HTTPException(status_code=400, detail="pqh_path is required")
+
+    pqh_path = Path(pqh_path_str)
+    if not pqh_path.exists():
+        raise HTTPException(status_code=400, detail=f"File not found: {pqh_path}")
+
+    # Determine target directory
+    target_str = (body.get("target_dir") or "").strip()
+    if target_str:
+        target_dir = Path(target_str)
+    else:
+        # Default: sibling folder named after the .pqh (without extension)
+        target_dir = pqh_path.parent / pqh_path.stem
+
+    try:
+        raw = pqh_path.read_bytes()
+        result = import_pqh(raw, target_dir, mode="new", conflict_policy="skip")
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    # Pick the first imported harness
+    harness_names = result.get("imported_harnesses", [])
+    if not harness_names:
+        raise HTTPException(status_code=400, detail="No harnesses found in bundle")
+
+    harness_name = harness_names[0]
+    harness_dir = target_dir / "harness" / harness_name
+
+    if not harness_dir.exists():
+        # Try target_dir itself as the harness folder
+        harness_dir = target_dir
+
+    try:
+        loaded_name = do_load(harness_dir)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Extracted OK but load failed: {exc}")
+
+    return {
+        "harness_name": loaded_name,
+        "target_dir": str(target_dir),
+        "conflicts": result.get("library_conflicts", []),
+        "diagnostics": result.get("diagnostics", []),
+    }

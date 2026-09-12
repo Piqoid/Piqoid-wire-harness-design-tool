@@ -628,6 +628,7 @@ function buildGraph(
 
   const anyHighlight = highlightedEntities.size > 0;
   const portSides = layout.portSides ?? {};
+  const portOrderMap = layout.portOrder ?? {};
   const allX = Object.values(layout.nodes ?? {}).map((p) => p.x);
   const midX = allX.length ? (Math.min(...allX) + Math.max(...allX)) / 2 : 600;
 
@@ -639,13 +640,23 @@ function buildGraph(
     const width = pos.width;
     const bgColor = pos.bgColor;
     const nodeSide = pos.x < midX ? "right" : "left";
-    const ports = harness.node_ports
-      .filter((p) => p.node_ref === n.id)
-      .map((p) => {
-        const net = p.net_ref ? netMap[p.net_ref] : undefined;
-        const side = (portSides[p.id] as PortSide | undefined) ?? nodeSide;
-        return { id: p.id, name: p.pin_name, side, netColor: net ? resolveNetColor(net) : undefined };
-      });
+    const order = portOrderMap[n.id] ?? [];
+    const rawPorts = harness.node_ports.filter((p) => p.node_ref === n.id);
+    const sortedRaw = order.length
+      ? [...rawPorts].sort((a, b) => {
+          const ai = order.indexOf(a.id);
+          const bi = order.indexOf(b.id);
+          if (ai === -1 && bi === -1) return 0;
+          if (ai === -1) return 1;
+          if (bi === -1) return -1;
+          return ai - bi;
+        })
+      : rawPorts;
+    const ports = sortedRaw.map((p) => {
+      const net = p.net_ref ? netMap[p.net_ref] : undefined;
+      const side = (portSides[p.id] as PortSide | undefined) ?? nodeSide;
+      return { id: p.id, name: p.pin_name, side, netColor: net ? resolveNetColor(net) : undefined };
+    });
     return {
       id: n.id, type: "device",
       position: { x: pos.x, y: pos.y },
@@ -1022,13 +1033,12 @@ function GraphCanvasInner() {
         selectNodesOnDrag={false}
         snapToGrid={gridSnap} snapGrid={[10, 10]}
         zoomOnDoubleClick={false}
-        colorMode="dark"
-        style={{ background: "#6e6e6e", cursor: wiring.active ? "crosshair" : "default" }}
+        style={{ background: "#060666", cursor: wiring.active ? "crosshair" : "default" }}
         deleteKeyCode={null}
       >
-        <Background color="#5a5a5a" gap={20} />
-        <Controls showInteractive={false} />
-        <MiniMap nodeColor="#1e3a5f" maskColor="#5a5a5acc" style={{ background: "#7a7a7a" }} />
+        <Background color="#777777" gap={20} />
+        <Controls showInteractive={false} style={{ button: { background: "#2d3748", border: "1px solid #4a5568", color: "#e2e8f0" } } as React.CSSProperties} />
+        <MiniMap nodeColor="#1e3a5f" maskColor="#77777799" style={{ background: "#999999" }} />
       </ReactFlow>
 
       {/* Context menu */}

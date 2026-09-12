@@ -6,6 +6,7 @@ import { WireTable } from "./views/WireTable";
 import { BundleTree } from "./views/BundleTree";
 import { ValidationPanel } from "./views/ValidationPanel";
 import { InspectorPanel } from "./views/InspectorPanel";
+import { ExportPanel } from "./views/ExportPanel";
 
 const NAV_ITEMS = [
   { id: "graph",   label: "Graph" },
@@ -36,12 +37,14 @@ const S: Record<string, React.CSSProperties> = {
 
 export default function App() {
   const {
-    loadProject, openHarness, meta, currentHarness,
+    loadProject, openHarness, importHarness, meta, currentHarness,
     activeView, setActiveView, diagnostics, undoStack, redoStack, undo, redo,
   } = useProjectStore();
   const [loading, setLoading] = useState(true);
   const [opening, setOpening] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showExport, setShowExport] = useState(false);
 
   useEffect(() => {
     loadProject()
@@ -66,6 +69,14 @@ export default function App() {
     finally { setOpening(false); }
   };
 
+  const handleImportHarness = async () => {
+    setImporting(true);
+    setError(null);
+    try { await importHarness(); }
+    catch (e) { setError(String(e)); }
+    finally { setImporting(false); }
+  };
+
   if (loading) return <div style={S.loader}>Loading…</div>;
 
   const errorCount   = diagnostics.filter((d) => d.severity === "error"   && !d.waived).length;
@@ -75,7 +86,8 @@ export default function App() {
     <div style={S.app}>
       {/* Header */}
       <header style={S.header}>
-        <span style={S.title}>⚡ Harness Tool</span>
+        <img src="/apple-touch-icon.png" alt="" style={{ width: 20, height: 20, imageRendering: "crisp-edges" }} />
+        <span style={S.title}>Piqoid Wire Harness Design Tool</span>
         {currentHarness && <span style={S.hname}>{meta?.name ?? currentHarness}</span>}
         <div style={{ flex: 1 }} />
 
@@ -86,7 +98,18 @@ export default function App() {
         >
           {opening ? "Opening…" : "Open Harness"}
         </button>
-        <button disabled style={{ ...headerBtn, opacity: 0.38, cursor: "not-allowed" }}>
+        <button
+          onClick={handleImportHarness}
+          disabled={importing}
+          style={headerBtn}
+        >
+          {importing ? "Importing…" : "Import .pqh"}
+        </button>
+        <button
+          onClick={() => setShowExport(true)}
+          disabled={!currentHarness}
+          style={{ ...headerBtn, opacity: currentHarness ? 1 : 0.38, cursor: currentHarness ? "pointer" : "not-allowed" }}
+        >
           Export
         </button>
 
@@ -156,6 +179,7 @@ export default function App() {
           </div>
         </div>
       )}
+      {showExport && <ExportPanel onClose={() => setShowExport(false)} />}
     </div>
   );
 }

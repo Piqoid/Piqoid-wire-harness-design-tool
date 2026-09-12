@@ -23,6 +23,29 @@ export async function openFolderDialog(): Promise<string | null> {
   return data.path ?? null;
 }
 
+export async function openPqhDialog(): Promise<string | null> {
+  const r = await fetch(`${BASE}/api/open-pqh-dialog`, { method: "POST" });
+  if (!r.ok) throw new Error(`POST /api/open-pqh-dialog: ${r.status}`);
+  const data = await r.json();
+  return data.path ?? null;
+}
+
+export async function importAndLoadPqh(
+  pqhPath: string,
+  targetDir?: string,
+): Promise<{ harness_name: string; target_dir: string; conflicts: string[]; diagnostics: unknown[] }> {
+  const r = await fetch(`${BASE}/api/import-and-load-pqh`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pqh_path: pqhPath, target_dir: targetDir }),
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({ detail: r.statusText }));
+    throw new Error((err as { detail?: string }).detail ?? r.statusText);
+  }
+  return r.json();
+}
+
 export async function loadFolderPath(path: string): Promise<{ harness_name: string }> {
   const r = await fetch(`${BASE}/api/load-folder`, {
     method: "POST",

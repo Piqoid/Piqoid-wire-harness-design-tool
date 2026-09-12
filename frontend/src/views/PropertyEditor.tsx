@@ -2,8 +2,8 @@
  * Full property editor popup for all entity types.
  * Opens on right-click → "Edit Properties…"
  */
-import { useState, useCallback } from "react";
-import { useProjectStore } from "../store/project";
+import { useState, useCallback, useRef } from "react";
+import { useProjectStore, type PortSide } from "../store/project";
 import type { HarnessData, Net, Segment, Node, NodePort, Splice } from "../types";
 
 // ── shared primitives ─────────────────────────────────────────────────────────
@@ -338,50 +338,90 @@ function SegmentEditor({ id, harness, onClose }: { id: string; harness: HarnessD
   );
 }
 
-// ── node editor ───────────────────────────────────────────────────────────────
+// ── port drag row ─────────────────────────────────────────────────────────────
 
-function PortNetRow({ port, netOpts, genericUpdate }: {
-  port: NodePort;
+const SIDE_COLORS: Record<string, string> = {
+  right: "#3b82f6", bottom: "#f59e0b", left: "#22c55e", top: "#a855f7",
+};
+const PORT_SIDE_ORDER: PortSide[] = ["right", "bottom", "left", "top"];
+
+function PortDragRow({
+  port, side, netOpts, genericUpdate,
+  isDragOver, isConfirmDelete,
+  onDragStart, onDragOver, onDrop, onDragEnd, onDeleteClick,
+}: {
+  port: NodePort; side: PortSide;
   netOpts: { value: string; label: string }[];
   genericUpdate: (et: string, id: string, body: Record<string, unknown>) => Promise<void>;
+  isDragOver: boolean; isConfirmDelete: boolean;
+  onDragStart: () => void; onDragOver: () => void;
+  onDrop: () => void; onDragEnd: () => void;
+  onDeleteClick: () => void;
 }) {
   const [netRef, setNetRef] = useState(port.net_ref ?? "");
-  const [saving, setSaving] = useState(false);
 
-  const save = useCallback(async (val: string) => {
-    setSaving(true);
-    try {
-      await genericUpdate("node_ports", port.id, { net_ref: val || undefined });
-      setNetRef(val);
-    } finally {
-      setSaving(false);
-    }
-  }, [port.id, genericUpdate]);
+  const saveNet = async (val: string) => {
+    await genericUpdate("node_ports", port.id, { net_ref: val || undefined });
+    setNetRef(val);
+  };
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
-      <span style={{ fontSize: 11, color: "#e2e8f0", minWidth: 60, flexShrink: 0 }}>{port.pin_name}</span>
-      <span style={{ fontSize: 9, color: "#475569", flexShrink: 0 }}>({port.id.slice(-6)})</span>
+    <div
+      draggable
+      onDragStart={(e) => { e.stopPropagation(); onDragStart(); }}
+      onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); onDragOver(); }}
+      onDrop={(e) => { e.preventDefault(); e.stopPropagation(); onDrop(); }}
+      onDragEnd={() => onDragEnd()}
+      style={{
+        display: "flex", alignItems: "center", gap: 5,
+        padding: "3px 4px",
+        borderTop: isDragOver ? "2px solid #3b82f6" : "2px solid transparent",
+        background: isDragOver ? "#1e3a5f33" : "transparent",
+        cursor: "default",
+      }}
+    >
+      <span style={{ cursor: "grab", color: "#374151", fontSize: 14,
+                     userSelect: "none", lineHeight: 1, flexShrink: 0 }}>⠿</span>
+      <span style={{
+        background: SIDE_COLORS[side], borderRadius: 2, padding: "0 3px",
+        fontSize: 8, color: "#fff", fontWeight: 700, textTransform: "uppercase",
+        flexShrink: 0, minWidth: 12, textAlign: "center",
+      }}>{side[0]}</span>
+      <span style={{ fontSize: 10, color: "#e2e8f0", minWidth: 46, flexShrink: 0 }}>
+        {port.pin_name}
+      </span>
       <select
         value={netRef}
-        onChange={(e) => save(e.target.value)}
-        disabled={saving}
+        onChange={(e) => saveNet(e.target.value)}
         style={{
-          flex: 1, background: "#111827", border: "1px solid #2d3748",
-          color: netRef ? "#60a5fa" : "#475569", fontSize: 11,
-          padding: "2px 5px", borderRadius: 3, fontFamily: "inherit",
-          opacity: saving ? 0.6 : 1,
+          flex: 1, minWidth: 0,
+          background: "#111827", border: "1px solid #2d3748",
+          color: netRef ? "#60a5fa" : "#475569",
+          fontSize: 10, padding: "1px 4px", borderRadius: 3, fontFamily: "inherit",
         }}
       >
-        <option value="">— unassigned —</option>
+        <option value="">— net —</option>
         {netOpts.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
+      <button
+        onClick={(e) => { e.stopPropagation(); onDeleteClick(); }}
+        title={isConfirmDelete ? "Click again to confirm delete (and cascade-delete wires)" : "Delete port"}
+        style={{
+          background: "none", border: isConfirmDelete ? "1px solid #ef4444" : "none",
+          borderRadius: 3, flexShrink: 0, padding: "0 4px",
+          cursor: "pointer", fontSize: isConfirmDelete ? 9 : 13,
+          color: isConfirmDelete ? "#ef4444" : "#475569",
+          fontWeight: isConfirmDelete ? 700 : 400,
+        }}
+      >{isConfirmDelete ? "del?" : "×"}</button>
     </div>
   );
 }
 
+// ── node editor ───────────────────────────────────────────────────────────────
+
 function NodeEditor({ id, harness, onClose }: { id: string; harness: HarnessData; onClose: () => void }) {
-  const { genericUpdate } = useProjectStore();
+  const { genericUpdate, layout, setPortSide, setPortOrder, deletePort } = useProjectStore();
   const orig = harness.nodes.find((n) => n.id === id);
   if (!orig) return <div style={{ color: "#f87171" }}>Node not found</div>;
 
@@ -389,6 +429,9 @@ function NodeEditor({ id, harness, onClose }: { id: string; harness: HarnessData
   const [des, setDes]         = useState(orig.designator ?? "");
   const [partRef, setPartRef] = useState(orig.part_ref ?? "");
   const [tags, setTags]       = useState(orig.tags ?? {});
+  const [confirmDeletePortId, setConfirmDeletePortId] = useState<string | null>(null);
+  const [dragOverTarget, setDragOverTarget] = useState<string | null>(null);
+  const dragPortIdRef = useRef<string | null>(null);
 
   const doSave = useCallback(async () => {
     await genericUpdate("nodes", id, {
@@ -400,29 +443,158 @@ function NodeEditor({ id, harness, onClose }: { id: string; harness: HarnessData
   const ports = harness.node_ports.filter((p) => p.node_ref === id);
   const netOpts = harness.nets.map((n) => ({ value: n.id, label: n.name }));
 
+  const portSides = layout?.portSides ?? {};
+  const portOrderForNode = layout?.portOrder?.[id] ?? [];
+
+  // Sort ports by persisted order
+  const sortedPorts = [...ports].sort((a, b) => {
+    const ai = portOrderForNode.indexOf(a.id);
+    const bi = portOrderForNode.indexOf(b.id);
+    if (ai === -1 && bi === -1) return 0;
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
+
+  const portsByGroup: Record<PortSide, NodePort[]> = {
+    right: [], bottom: [], left: [], top: [],
+  };
+  sortedPorts.forEach((p) => {
+    const side = (portSides[p.id] as PortSide) ?? "right";
+    portsByGroup[side].push(p);
+  });
+
+  // Flat ordered list across all sides (clockwise: right→bottom→left→top)
+  const flatOrdered = PORT_SIDE_ORDER.flatMap((s) => portsByGroup[s]);
+
+  const handleDrop = (targetPortId: string | null, targetSide: PortSide) => {
+    const dragId = dragPortIdRef.current;
+    if (!dragId || dragId === targetPortId) {
+      dragPortIdRef.current = null;
+      setDragOverTarget(null);
+      return;
+    }
+
+    const currentFlat = flatOrdered.map((p) => p.id);
+    const withoutDrag = currentFlat.filter((pid) => pid !== dragId);
+
+    let newFlat: string[];
+    if (targetPortId !== null) {
+      // Insert before the target port
+      const idx = withoutDrag.indexOf(targetPortId);
+      const at = idx === -1 ? withoutDrag.length : idx;
+      newFlat = [...withoutDrag.slice(0, at), dragId, ...withoutDrag.slice(at)];
+    } else {
+      // Insert at end of target side's group
+      const sideIds = portsByGroup[targetSide].map((p) => p.id).filter((pid) => pid !== dragId);
+      if (sideIds.length > 0) {
+        const last = sideIds[sideIds.length - 1];
+        const idx = withoutDrag.indexOf(last);
+        newFlat = [...withoutDrag.slice(0, idx + 1), dragId, ...withoutDrag.slice(idx + 1)];
+      } else {
+        // Empty side — find where it belongs in the cross-side order
+        const sideIdx = PORT_SIDE_ORDER.indexOf(targetSide);
+        let insertAt = withoutDrag.length;
+        for (const s of PORT_SIDE_ORDER.slice(sideIdx + 1)) {
+          const firstOfNext = portsByGroup[s].find((p) => p.id !== dragId);
+          if (firstOfNext) {
+            const idx = withoutDrag.indexOf(firstOfNext.id);
+            if (idx !== -1) { insertAt = idx; break; }
+          }
+        }
+        newFlat = [...withoutDrag.slice(0, insertAt), dragId, ...withoutDrag.slice(insertAt)];
+      }
+    }
+
+    setPortOrder(id, newFlat);
+    const currentSide = (portSides[dragId] as PortSide) ?? "right";
+    if (currentSide !== targetSide) setPortSide(dragId, targetSide);
+
+    dragPortIdRef.current = null;
+    setDragOverTarget(null);
+  };
+
+  const handleDeleteClick = useCallback(async (portId: string) => {
+    if (confirmDeletePortId !== portId) {
+      setConfirmDeletePortId(portId);
+      return;
+    }
+    setConfirmDeletePortId(null);
+    await deletePort(portId);
+  }, [confirmDeletePortId, deletePort]);
+
   return (
     <>
       <FText label="ID" value={orig.id} readonly />
       <FText label="Name" value={name} onChange={setName} />
       <FText label="Designator" value={des} onChange={setDes} placeholder="U1, J2, R5…" />
       <FText label="Part ref" value={partRef} onChange={setPartRef} placeholder="library part ID" />
+
+      {ports.length > 0 && (
+        <>
+          <div style={sectionHead}>
+            PORTS ({ports.length}) — drag to reorder or change side
+          </div>
+          {PORT_SIDE_ORDER.map((side) => (
+            <div key={side}>
+              {/* Section header is also a drop target */}
+              <div
+                onDragOver={(e) => { e.preventDefault(); setDragOverTarget(`side-${side}`); }}
+                onDragLeave={() => setDragOverTarget((t) => t === `side-${side}` ? null : t)}
+                onDrop={(e) => { e.preventDefault(); handleDrop(null, side); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 5,
+                  fontSize: 9, color: "#4b5563", textTransform: "uppercase",
+                  letterSpacing: ".06em", marginTop: 6, paddingTop: 4,
+                  borderTop: "1px solid #1e2740", paddingBottom: 2, paddingLeft: 2,
+                  background: dragOverTarget === `side-${side}` ? "#1e3a5f55" : "transparent",
+                  borderRadius: 3, cursor: "default",
+                  transition: "background .1s",
+                }}
+              >
+                <span style={{
+                  display: "inline-block", width: 7, height: 7, borderRadius: "50%",
+                  background: SIDE_COLORS[side], flexShrink: 0,
+                }} />
+                {side.toUpperCase()} ({portsByGroup[side].length})
+                {dragOverTarget === `side-${side}` && (
+                  <span style={{ color: "#60a5fa", marginLeft: 4 }}>drop here →</span>
+                )}
+              </div>
+
+              {portsByGroup[side].map((p) => (
+                <PortDragRow
+                  key={p.id}
+                  port={p} side={side}
+                  netOpts={netOpts}
+                  genericUpdate={genericUpdate}
+                  isDragOver={dragOverTarget === `port-${p.id}`}
+                  isConfirmDelete={confirmDeletePortId === p.id}
+                  onDragStart={() => { dragPortIdRef.current = p.id; }}
+                  onDragOver={() => setDragOverTarget(`port-${p.id}`)}
+                  onDrop={() => handleDrop(p.id, side)}
+                  onDragEnd={() => { dragPortIdRef.current = null; setDragOverTarget(null); }}
+                  onDeleteClick={() => handleDeleteClick(p.id)}
+                />
+              ))}
+
+              {portsByGroup[side].length === 0 && (
+                <div style={{ fontSize: 10, color: "#374151", padding: "2px 4px" }}>
+                  (empty — drop here)
+                </div>
+              )}
+            </div>
+          ))}
+        </>
+      )}
+
       <div style={sectionHead}>INTERFACES</div>
       {orig.interfaces.map((iface) => (
         <div key={iface.id} style={{ fontSize: 11, color: "#94a3b8", marginBottom: 2 }}>
           {iface.name} <span style={{ color: "#475569" }}>({iface.id})</span>
         </div>
       ))}
-      {ports.length > 0 && (
-        <>
-          <div style={sectionHead}>PORTS — NET ASSIGNMENT ({ports.length})</div>
-          <div style={{ fontSize: 9, color: "#475569", marginBottom: 6 }}>
-            Changes save immediately. Wire validation checks net match.
-          </div>
-          {ports.map((p) => (
-            <PortNetRow key={p.id} port={p} netOpts={netOpts} genericUpdate={genericUpdate} />
-          ))}
-        </>
-      )}
+
       <div style={sectionHead}>TAGS</div>
       <TagsEditor tags={tags} onChange={setTags} />
       <SaveBar onSave={doSave} onClose={onClose} />

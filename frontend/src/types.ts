@@ -208,6 +208,8 @@ export interface LayoutData {
   splices: Record<string, { x: number; y: number; width?: number; height?: number }>;
   edges: Record<string, { waypoints: { x: number; y: number }[] }>;
   portSides?: Record<string, "left" | "right" | "top" | "bottom">;
+  /** Ordered list of portIds per nodeId; determines handle render order. */
+  portOrder?: Record<string, string[]>;
   spliceEdgeSides?: Record<string, {
     srcSide?: "left" | "right" | "top" | "bottom";
     tgtSide?: "left" | "right" | "top" | "bottom";
